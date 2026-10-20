@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 type Resposta = "sim" | "nao" | "nao_sei";
 type Categoria = "sintoma" | "contexto";
@@ -76,6 +76,14 @@ const perguntas: Pergunta[] = [
 ];
 
 export default function TriagemJA() {
+  return (
+    <Suspense fallback={null}>
+      <TriagemConteudo />
+    </Suspense>
+  );
+}
+
+function TriagemConteudo() {
 const router = useRouter();
     const parametros = useSearchParams();
 const jornadaId = parametros.get("jornada");

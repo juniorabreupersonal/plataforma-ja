@@ -19,7 +19,16 @@ try {
   for (const [path, content] of [['/login', 'Acesso à Plataforma JA'], ['/criar-conta', 'Criar sua conta'], ['/recuperar-senha', 'Recuperar senha'], ['/cadastro', 'Cadastro Inicial JA']]) {
     const response = await fetch(origin + path);
     assert.equal(response.status, 200);
-    assert.ok((await response.text()).includes(content));
+    const html = await response.text();
+    assert.ok(html.includes(content));
+    if (path === '/criar-conta') {
+      assert.ok(html.includes('Cadastre-se na Plataforma JA e comece sua jornada de avaliação, treinamento e evolução.'));
+      assert.ok(html.includes('Após o cadastro, enviaremos um e-mail para confirmar sua conta.'));
+      assert.ok(!html.includes('O cadastro não concede funções profissionais ou administrativas.'));
+      assert.equal((html.match(/minlength="8"/gi) ?? []).length, 2);
+      assert.equal((html.match(/maxlength="128"/gi) ?? []).length, 2);
+      assert.ok(html.includes('Use entre 8 e 128 caracteres.'));
+    }
     console.log(`${path}: HTTP 200 e conteúdo esperado`);
   }
   for (const [path, target, forbidden] of [['/conta', '/login', 'Sua sessão foi validada'], ['/redefinir-senha', '/recuperar-senha', 'name="confirmation"']]) {

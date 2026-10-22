@@ -24,7 +24,7 @@ export async function login(_: AuthState, form: FormData): Promise<AuthState> {
 
 export async function signup(_: AuthState, form: FormData): Promise<AuthState> {
   const input = credentials(form, true);
-  if (!input) return { message: "Informe um e-mail válido e uma senha entre 12 e 128 caracteres." };
+  if (!input) return { message: "Informe um e-mail válido e uma senha entre 8 e 128 caracteres." };
   if (input.password !== form.get("confirmation")) return { message: "As senhas devem ser iguais." };
   try {
     const origin = applicationOrigin(process.env.APP_URL);
@@ -53,7 +53,7 @@ export async function recover(_: AuthState, form: FormData): Promise<AuthState> 
 
 export async function resetPassword(_: AuthState, form: FormData): Promise<AuthState> {
   const password = validPassword(form.get("password"), true);
-  if (!password || password !== form.get("confirmation")) return { message: "Use uma senha entre 12 e 128 caracteres e confirme com o mesmo valor." };
+  if (!password || password !== form.get("confirmation")) return { message: "Use uma senha entre 8 e 128 caracteres e confirme com o mesmo valor." };
   try {
     const client = await authClient();
     const { data, error } = await client.auth.getUser();

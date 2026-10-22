@@ -202,3 +202,37 @@ test('Proxy propaga renovação para requisição e resposta sem cache compartil
   assert.equal(responseWrites.length, 1);
   assert.equal(response.headers.get('cache-control'), 'private, no-store');
 });
+
+test('senhas novas aceitam 8 e 128 caracteres e rejeitam 7 e 129', () => {
+  for (const length of [7, 8, 128, 129]) {
+    const password = 'a'.repeat(length);
+    const accepted = length >= 8 && length <= 128;
+    assert.equal(validation.validPassword(password, true), accepted ? password : null);
+    assert.equal(Boolean(validation.credentials(form({ email: 'a@example.invalid', password }), true)), accepted);
+  }
+  // Login permanece compatível com senhas existentes; não redefine sua política.
+  assert.equal(validation.validPassword('legacy', false), 'legacy');
+});
+
+test('cadastro e redefinição aplicam os mesmos limites antes de consultar o provedor', async () => {
+  process.env.APP_URL = 'https://app.example.invalid';
+  for (const length of [7, 8, 128, 129]) {
+    const password = 'a'.repeat(length);
+    const input = form({ email: 'a@example.invalid', password, confirmation: password });
+    const signup = fixture();
+    const result = await signup.actions.signup(state, input);
+    const reset = fixture({}, user.id);
+    if (length === 8 || length === 128) {
+      assert.equal(signup.calls[0][0], 'signUp');
+      assert.deepEqual(Object.keys(signup.calls[0][1]).sort(), ['email', 'options', 'password']);
+      await assert.rejects(reset.actions.resetPassword(state, input), /redirect:\/login\?status=password-updated/);
+      assert.ok(reset.calls.some(call => call[0] === 'updateUser'));
+    } else {
+      assert.match(result.message, /8 e 128/);
+      assert.equal(signup.calls.length, 0);
+      const failed = await reset.actions.resetPassword(state, input);
+      assert.match(failed.message, /8 e 128/);
+      assert.equal(reset.calls.length, 0);
+    }
+  }
+});

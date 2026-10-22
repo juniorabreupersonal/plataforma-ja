@@ -5,7 +5,7 @@ export function validEmail(value: FormDataEntryValue | null) {
 }
 
 export function validPassword(value: FormDataEntryValue | null, strong = false) {
-  return typeof value === "string" && value.length >= (strong ? 12 : 1) && value.length <= 128 ? value : null;
+  return typeof value === "string" && value.length >= (strong ? 8 : 1) && value.length <= 128 ? value : null;
 }
 
 export function credentials(form: FormData, strong = false) {

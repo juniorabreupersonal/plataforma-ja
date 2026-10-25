@@ -13,7 +13,9 @@ cleanup() { docker rm --force "$container_id" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 ready=false
 for attempt in {1..60}; do
-  if docker exec "$container_id" pg_isready --username postgres >/dev/null 2>&1; then
+  # O entrypoint inicia e encerra um servidor temporário durante o initdb.
+  # Aguardar o postgres definitivo como PID 1 evita confundir essa janela com readiness.
+  if docker exec "$container_id" sh -c 'test "$(cat /proc/1/comm)" = postgres && pg_isready --username postgres' >/dev/null 2>&1; then
     ready=true
     break
   fi

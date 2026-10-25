@@ -88,15 +88,26 @@ O executor usa autenticação sem senha **apenas dentro do contêiner descartáv
 
 Esses testes exercitam RLS com `SET ROLE` e claims sintéticas, sem credencial privilegiada para as ações de usuário. A conta operacional é usada somente para fixtures e verificações de integridade. Nenhum usuário real ou dado clínico é necessário.
 
-### Estado de validação desta preparação
+### Estado de validação após GitHub Actions
 
-- Verificações estáticas e sintaxe do shell: executadas; resultados devem acompanhar a revisão.
-- **Migração e testes SQL: não executados.** Não há PostgreSQL/psql instalado nem imagem local. O download da imagem foi bloqueado pelo registro com `Forbidden`. Instalação de ferramentas auxiliares também não ficou disponível.
-- Não há validação de sintaxe/execução PostgreSQL, PL/pgSQL, aplicação em Supabase ou eficácia de RLS comprovada somente pelos testes estáticos.
+- **14 verificações estáticas passaram**, incluindo restrições do workflow e espera pelo processo PostgreSQL definitivo.
+- **Migração e 62 assertivas SQL executadas com sucesso em PostgreSQL 17 descartável**, no GitHub Actions: [execução do PR](https://github.com/juniorabreupersonal/plataforma-ja/actions/runs/40154854757), commit `73ee8bf`.
+- O teste aplica o scaffold Auth sintético, insere duas identidades anteriores, executa a migração transacional e a suíte com papéis distintos, permissões e RLS reais do PostgreSQL. Todos os usuários são sintéticos.
+- Nenhuma conexão, secret ou credencial Supabase é utilizada. O PostgreSQL é criado sem rede/portas/volumes e removido ao fim. O checkout usa somente permissão de leitura e não persiste credenciais Git.
+- A execução local no Codex continua indisponível por bloqueio de download da imagem. O workflow `.github/workflows/identity-postgres.yml` reproduz a validação no runner GitHub.
+- **Ainda não executados:** Supabase isolado com Auth/PostgREST/MFA reais, testes de concorrência e expiração por passagem real de tempo.
+
+### Correções encontradas durante a execução
+
+1. O executor detectava o servidor temporário de inicialização do contêiner como pronto. Agora exige o processo PostgreSQL definitivo como PID 1 antes de executar psql.
+2. O teste de FK entre organizações reutilizava uma combinação de aluno/profissional já aberta, disparando a unicidade (`23505`) antes da FK esperada (`23503`). A fixture do cenário foi ajustada para isolar o conflito entre organizações, preservando o erro esperado.
+3. O workflow publica erros sintéticos como anotações e mantém `pipefail`/`ON_ERROR_STOP`; falhas não são convertidas em sucesso. Checkout fixado por SHA com runtime atual.
+
+**A migração versionada não precisou de alteração para passar esta execução.** As correções atingiram o executor e a montagem de um cenário de teste; não foram removidas restrições nem desativadas assertivas.
 
 ### Aceite obrigatório antes de aplicação remota
 
-1. Executar migração e testes SQL no PostgreSQL descartável.
+1. Manter o check PostgreSQL descartável aprovado no commit final revisado.
 2. Executar também em Supabase local/isolado real, **sem aplicar o scaffold Auth**, usando as fixtures adaptadas somente ao ambiente sintético autorizado.
 3. Verificar versão PostgreSQL do destino, colunas/tipos de `auth.users`/`auth.mfa_factors`, papéis de execução e ausência de colisões de nomes. Não editar objetos internos do Auth.
 4. Validar novo cadastro, confirmação PKCE, login, recuperação e logout com o trigger real. Nenhum desses fluxos usa tabelas clínicas.

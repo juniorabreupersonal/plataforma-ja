@@ -1,0 +1,71 @@
+name: Identity migration - isolated PostgreSQL
+
+on:
+  push:
+    branches: [feat/migracao-identidade-fase1]
+    paths:
+      - '.github/workflows/identity-postgres.yml'
+      - 'supabase/**'
+      - 'scripts/check-identity-migration.py'
+      - 'scripts/test-db-local.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/identity-postgres.yml'
+      - 'supabase/**'
+      - 'scripts/check-identity-migration.py'
+      - 'scripts/test-db-local.sh'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: identity-postgres-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: PostgreSQL 17 - synthetic Auth and RLS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout reviewed code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Static checks and shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/check-identity-migration.py
+          bash -n scripts/test-db-local.sh
+          git diff --check
+      - name: Obtain official disposable database image
+        run: docker pull postgres:17
+      - name: Apply migration and execute SQL security tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The runner creates its own database with --network none, no ports or volumes.
+          # No DATABASE_URL, repository secrets or Supabase connection are used.
+          bash scripts/test-db-local.sh 2>&1 | tee /tmp/ja-identity-postgres.log
+      - name: Summarize isolated test execution
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Isolated PostgreSQL validation'
+            echo 'Database: disposable PostgreSQL 17; no network, published ports or Supabase credentials.'
+            if [ -f /tmp/ja-identity-postgres.log ]; then
+              count=$(grep -c 'NOTICE:  PASS:' /tmp/ja-identity-postgres.log || true)
+              echo "SQL assertions completed: $count"
+              if grep -q 'Migração e testes SQL passaram' /tmp/ja-identity-postgres.log; then
+                echo 'Migration and SQL suite: passed.'
+              else
+                echo 'Migration/SQL suite: incomplete or failed. Inspect the job log.'
+              fi
+            else
+              echo 'SQL suite did not start.'
+            fi
+            echo 'Still required: isolated Supabase with real Auth/PostgREST/MFA and concurrency tests.'
+          } >> "$GITHUB_STEP_SUMMARY"

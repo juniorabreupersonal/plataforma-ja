@@ -162,7 +162,7 @@ select ja_test.login(null);
 
 -- Integridade no banco, mesmo quando uma operação administrativa contorna RLS.
 select ja_test.expect_error(format($q$insert into public.care_relationships(organization_id,professional_membership_id,student_membership_id,professional_user_id,student_user_id,requested_by)
- values(%L,%L,%L,'00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000004')$q$, :'org_a', :'prof2_a', :'student_b'),
+ values(%L,%L,%L,'00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000005','00000000-0000-4000-8000-000000000004')$q$, :'org_b', :'prof2_a', :'student_b'),
  '23503','FK composta bloqueia mistura de organizações');
 select ja_test.expect_error($q$delete from auth.users where id='00000000-0000-4000-8000-000000000005'$q$,'23503','Auth não apaga perfil e histórico por cascata');
 select ja_test.expect_error('delete from public.audit_events','42501','auditoria append-only inclusive em operação comum do banco');

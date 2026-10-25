@@ -88,6 +88,22 @@ class IdentityMigrationChecks(unittest.TestCase):
         self.assertIn("--set ON_ERROR_STOP=on", runner)
         self.assertNotRegex(runner, r"--publish|--host|--volume|postgres(?:ql)?://")
 
+    def test_runner_waits_for_final_server(self):
+        runner = (ROOT / "scripts/test-db-local.sh").read_text()
+        self.assertIn('/proc/1/comm', runner)
+        self.assertIn('= postgres && pg_isready', runner)
+
+    def test_ci_is_restricted_to_disposable_database(self):
+        workflow = (ROOT / ".github/workflows/identity-postgres.yml").read_text()
+        self.assertIn("contents: read", workflow)
+        self.assertIn("persist-credentials: false", workflow)
+        self.assertIn("bash scripts/test-db-local.sh", workflow)
+        self.assertIn("set -euo pipefail", workflow)
+        self.assertNotIn("${{ secrets.", workflow)
+        self.assertNotIn("pull_request_target", workflow)
+        self.assertNotIn("self-hosted", workflow)
+        self.assertNotRegex(workflow, r"postgres(?:ql)?://|supabase db push|supabase link")
+
     def test_no_credentials_in_artifacts(self):
         for path in [MIGRATION, *list((ROOT / "supabase/tests").rglob("*.sql"))]:
             content = path.read_text()

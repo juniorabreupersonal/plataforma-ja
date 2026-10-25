@@ -46,7 +46,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="#acessos"
+              href="/login"
               className="rounded-lg border border-white/30 px-6 py-4 font-semibold"
             >
               Acessar plataforma

@@ -95,7 +95,7 @@ Esses testes exercitam RLS com `SET ROLE` e claims sintéticas, sem credencial p
 - O teste aplica o scaffold Auth sintético, insere duas identidades anteriores, executa a migração transacional e a suíte com papéis distintos, permissões e RLS reais do PostgreSQL. Todos os usuários são sintéticos.
 - Nenhuma conexão, secret ou credencial Supabase é utilizada. O PostgreSQL é criado sem rede/portas/volumes e removido ao fim. O checkout usa somente permissão de leitura e não persiste credenciais Git.
 - A execução local no Codex continua indisponível por bloqueio de download da imagem. O workflow `.github/workflows/identity-postgres.yml` reproduz a validação no runner GitHub.
-- **Ainda não executados:** Supabase isolado com Auth/PostgREST/MFA reais, testes de concorrência e expiração por passagem real de tempo.
+- **Supabase isolado com Auth/PostgREST/MFA reais: aprovado em GitHub Actions**, incluindo corridas de bootstrap/convites/vínculos, revogação, suspensão e expiração por passagem de tempo. Ver [detalhamento e limites](tests/integration/README.md). O teste integrado não substitui o aceite da aplicação Next.js com o novo esquema.
 
 ### Correções encontradas durante a execução
 
@@ -108,12 +108,12 @@ Esses testes exercitam RLS com `SET ROLE` e claims sintéticas, sem credencial p
 ### Aceite obrigatório antes de aplicação remota
 
 1. Manter o check PostgreSQL descartável aprovado no commit final revisado.
-2. Executar também em Supabase local/isolado real, **sem aplicar o scaffold Auth**, usando as fixtures adaptadas somente ao ambiente sintético autorizado.
+2. Manter o workflow Supabase isolado aprovado no commit final, sem scaffold Auth; repetir o aceite da aplicação Next.js contra esse ambiente antes de uso real.
 3. Verificar versão PostgreSQL do destino, colunas/tipos de `auth.users`/`auth.mfa_factors`, papéis de execução e ausência de colisões de nomes. Não editar objetos internos do Auth.
 4. Validar novo cadastro, confirmação PKCE, login, recuperação e logout com o trigger real. Nenhum desses fluxos usa tabelas clínicas.
-5. Testar concorrência: duas inicializações de proprietário, convites duplicados, aceite versus encerramento e suspensão. Os locks podem causar deadlock com rollback seguro; a camada de aplicação deverá tratar tentativa novamente, sem concessão parcial.
-6. Testar expiração com passagem real de tempo e requisições independentes; `now()` tem semântica transacional.
-7. Conferir RLS por PostgREST com JWTs sintéticos de ambiente de teste, incluindo AAL1/AAL2. Claims via SET ROLE não substituem essa integração.
+5. As corridas de bootstrap, convites, solicitações e aceite versus encerramento passaram no teste integrado. Ampliar testes de carga e interleavings conforme a integração; a aplicação deverá tratar deadlocks com rollback seguro e nova tentativa.
+6. Expiração com passagem real de tempo e requisições independentes passou no teste integrado; considerar que `now()` tem semântica transacional.
+7. RLS por PostgREST com JWTs reais de contas sintéticas, incluindo AAL1/AAL2 e MFA TOTP, passou no stack local. Preservar essa cobertura e as políticas de sessão na aplicação.
 8. Aprovar política de retenção/exclusão e procedimento do proprietário; revisar janela de lock, backup e plano de recuperação.
 
 Eventos negados não são persistidos na transação que falha, pois seriam revertidos. Auditoria de tentativas negadas exige canal separado de logs seguros na futura integração. Repetir uma migração já aplicada deve ser controlado pelo histórico versionado, não por `IF NOT EXISTS` que oculte conflitos.

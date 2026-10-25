@@ -332,9 +332,15 @@ def main():
         try:
             stack.start()
             exercise(stack)
-            print(f'::notice title=Supabase integration::COMPLETE: {COUNT} assertions passed', flush=True)
         finally:
-            stack.cli('stop', '--no-backup', required=False)
+            stopped = stack.cli('stop', '--no-backup', required=False)
+            if stopped.returncode:
+                raise Failure('Limpeza do stack local não foi concluída')
+        print(f'::notice title=Supabase integration::COMPLETE: {COUNT} assertions passed', flush=True)
+        summary = os.environ.get('GITHUB_STEP_SUMMARY')
+        if summary:
+            with open(summary, 'a') as report:
+                report.write(f'## Result\n{COUNT} integrated assertions passed; disposable stack stopped without backup.\n')
 
 
 if __name__ == '__main__':

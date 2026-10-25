@@ -36,7 +36,7 @@ jobs:
       - name: Static validation
         run: |
           python3 scripts/check-identity-migration.py
-          python3 -m py_compile supabase/tests/integration/run.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s supabase/tests/integration -p 'test_*.py' -v
       - name: Run disposable local Supabase integration
         run: python3 supabase/tests/integration/run.py
       - name: Scope of this check

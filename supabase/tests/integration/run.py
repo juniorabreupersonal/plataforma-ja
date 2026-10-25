@@ -40,7 +40,7 @@ def check(ok, label):
 
 def local(url):
     p = urllib.parse.urlsplit(url)
-    if p.scheme != 'http' or p.hostname != '127.0.0.1' or p.port not in (54321, 54324):
+    if p.scheme != 'http' or p.hostname != '127.0.0.1' or p.port not in (54321, 54324) or p.username or p.password or p.fragment:
         raise Failure('Destino fora dos serviços locais permitidos')
     return url
 
@@ -145,9 +145,13 @@ class Stack:
             headers['Authorization'] = 'Bearer ' + user['access_token']
         return request(API + path, method, body, headers)
 
-    def rpc(self, name, user, args, expected=200):
+    def rpc(self, name, user, args, expected=None):
         status, data, _ = self.api('/rest/v1/rpc/' + name, user, 'POST', args)
-        check(status == expected, f'RPC {name}: HTTP {expected}')
+        if expected is None:
+            expected = 204 if name in ('ja_accept_membership', 'ja_end_membership', 'ja_accept_care', 'ja_end_care', 'ja_revoke_admin') else 200
+        code = data.get('code', '') if isinstance(data, dict) else ''
+        safe_code = code if re.fullmatch(r'[A-Za-z0-9_]{1,40}', str(code)) else 'omitted'
+        check(status == expected, f'RPC {name}: esperado HTTP {expected}, recebido {status}, code {safe_code}')
         return data
 
     def rows(self, table, user):
@@ -241,6 +245,7 @@ def exercise(stack):
     owner = stack.signup('owner')
     outsider = stack.signup('outsider')
     stack.sql((ROOT / 'supabase/migrations/202610250001_identity_foundation.sql').read_text())
+    stack.sql("notify pgrst, 'reload schema';")
     check(stack.sql('select count(*) from public.profiles;').stdout.strip() == '2', 'backfill compatível com Auth real')
     check(stack.sql('select count(*) from public.platform_role_assignments;').stdout.strip() == '0', 'migração não cria proprietário ou funções')
     people = {name: stack.signup(name) for name in ['admin', 'professional-a', 'professional-b', 'professional-c', 'student-a', 'student-b']}
@@ -292,8 +297,8 @@ def exercise(stack):
     accepted, ended = pair(lambda: stack.api('/rest/v1/rpc/ja_accept_care', sa, 'POST', {'p_id': care}),
                           lambda: stack.api('/rest/v1/rpc/ja_end_membership', pa, 'POST', {'p_id': memberships['professional-a', orga], 'p_reason': 'Synthetic end'}))
     for result in [accepted, ended]:
-        check(result[0] == 200 or (isinstance(result[1], dict) and result[1].get('code') in ('40P01', '23514', '42501')), 'aceite/encerramento concorrentes falham ou serializam de forma segura')
-    if ended[0] != 200:
+        check(result[0] == 204 or (isinstance(result[1], dict) and result[1].get('code') in ('40P01', '23514', '42501')), 'aceite/encerramento concorrentes falham ou serializam de forma segura')
+    if ended[0] != 204:
         stack.rpc('ja_end_membership', pa, {'p_id': memberships['professional-a', orga], 'p_reason': 'Synthetic retry'})
     check(stack.sql("select count(*) from public.care_relationships c join public.organization_memberships m on m.id=c.professional_membership_id where c.status='active' and m.status='ended';").stdout.strip() == '0', 'concorrência não deixa acompanhamento ativo com participação encerrada')
     for professional, org in [(pb, orga), (pc, orgb)]:

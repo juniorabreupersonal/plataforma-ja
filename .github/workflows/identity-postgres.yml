@@ -48,7 +48,14 @@ jobs:
           set -euo pipefail
           # The runner creates its own database with --network none, no ports or volumes.
           # No DATABASE_URL, repository secrets or Supabase connection are used.
-          bash scripts/test-db-local.sh 2>&1 | tee /tmp/ja-identity-postgres.log
+          if ! bash scripts/test-db-local.sh 2>&1 | tee /tmp/ja-identity-postgres.log; then
+            while IFS= read -r line; do
+              line="${line//'%'/'%25'}"
+              line="${line//$'\r'/'%0D'}"
+              printf '::error title=PostgreSQL validation::%s\n' "$line"
+            done < <(grep -E 'ERROR:|FATAL:|FAIL:|psql:' /tmp/ja-identity-postgres.log | tail -20)
+            exit 1
+          fi
       - name: Summarize isolated test execution
         if: always()
         shell: bash

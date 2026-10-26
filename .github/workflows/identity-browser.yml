@@ -1,0 +1,60 @@
+name: Next.js browser - isolated Supabase
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/identity-browser.yml'
+      - 'supabase/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.ts'
+permissions:
+  contents: read
+concurrency:
+  group: identity-browser-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  supabase:
+    name: Chromium and Next.js with real local Supabase
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install real browser
+        run: |
+          python3 -m pip install playwright==1.64.1
+          python3 -m playwright install --with-deps chromium
+      - name: Install pinned official CLI with checksum verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ja-supabase-cli
+          cd /tmp/ja-supabase-cli
+          base=https://github.com/supabase/cli/releases/download/v2.122.0
+          curl --fail --silent --show-error --location --proto '=https' "$base/supabase_2.122.0_linux_amd64.tar.gz" -o supabase_2.122.0_linux_amd64.tar.gz
+          curl --fail --silent --show-error --location --proto '=https' "$base/checksums.txt" -o checksums.txt
+          grep ' supabase_2.122.0_linux_amd64.tar.gz$' checksums.txt > selected.sha256
+          sha256sum --check selected.sha256
+          tar -xzf supabase_2.122.0_linux_amd64.tar.gz supabase
+          echo /tmp/ja-supabase-cli >> "$GITHUB_PATH"
+      - name: Static validation
+        run: |
+          python3 scripts/check-identity-migration.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s supabase/tests/integration -p 'test_*.py' -v
+      - name: Browser end-to-end against disposable Supabase
+        run: python3 supabase/tests/browser/run_browser.py
+      - name: Scope of browser evidence
+        if: always()
+        run: |
+          {
+            echo '## Browser scope'
+            echo 'Real headless Chromium, copied Next.js production build, disposable local Supabase and synthetic accounts only.'
+            echo 'Form/navigation assertions are browser tests. Profile/privilege assertions use HTTP, not visual interfaces.'
+            echo 'No traces, videos, storage state, mail bodies or tokens are uploaded.'
+          } >> "$GITHUB_STEP_SUMMARY"

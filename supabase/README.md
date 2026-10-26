@@ -95,7 +95,7 @@ Esses testes exercitam RLS com `SET ROLE` e claims sintéticas, sem credencial p
 - O teste aplica o scaffold Auth sintético, insere duas identidades anteriores, executa a migração transacional e a suíte com papéis distintos, permissões e RLS reais do PostgreSQL. Todos os usuários são sintéticos.
 - Nenhuma conexão, secret ou credencial Supabase é utilizada. O PostgreSQL é criado sem rede/portas/volumes e removido ao fim. O checkout usa somente permissão de leitura e não persiste credenciais Git.
 - A execução local no Codex continua indisponível por bloqueio de download da imagem. O workflow `.github/workflows/identity-postgres.yml` reproduz a validação no runner GitHub.
-- **Supabase isolado com Auth/PostgREST/MFA reais: aprovado em GitHub Actions**, incluindo corridas de bootstrap/convites/vínculos, revogação, suspensão e expiração por passagem de tempo. Ver [detalhamento e limites](tests/integration/README.md). O teste integrado não substitui o aceite da aplicação Next.js com o novo esquema.
+- **Supabase isolado com Auth/PostgREST/MFA reais: aprovado em GitHub Actions**, incluindo corridas de bootstrap/convites/vínculos, revogação, suspensão e expiração por passagem de tempo. Ver [detalhamento e limites](tests/integration/README.md). O aceite automatizado da aplicação Next.js em Chromium real também passou; ver [cenários de navegador e API](tests/browser/README.md). Isso não substitui testes em outros navegadores ou revisão visual manual.
 
 ### Correções encontradas durante a execução
 
@@ -108,7 +108,7 @@ Esses testes exercitam RLS com `SET ROLE` e claims sintéticas, sem credencial p
 ### Aceite obrigatório antes de aplicação remota
 
 1. Manter o check PostgreSQL descartável aprovado no commit final revisado.
-2. Manter o workflow Supabase isolado aprovado no commit final, sem scaffold Auth; repetir o aceite da aplicação Next.js contra esse ambiente antes de uso real.
+2. Manter os workflows de Supabase isolado e Next.js/Chromium aprovados no commit final, sem scaffold Auth. Ampliar cobertura de navegadores e realizar revisão visual/acessibilidade antes de uso real.
 3. Verificar versão PostgreSQL do destino, colunas/tipos de `auth.users`/`auth.mfa_factors`, papéis de execução e ausência de colisões de nomes. Não editar objetos internos do Auth.
 4. Validar novo cadastro, confirmação PKCE, login, recuperação e logout com o trigger real. Nenhum desses fluxos usa tabelas clínicas.
 5. As corridas de bootstrap, convites, solicitações e aceite versus encerramento passaram no teste integrado. Ampliar testes de carga e interleavings conforme a integração; a aplicação deverá tratar deadlocks com rollback seguro e nova tentativa.

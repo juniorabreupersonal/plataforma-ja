@@ -110,7 +110,7 @@ class Stack:
         text = re.sub(r'(?m)^project_id\s*=.*$', f'project_id = "{PROJECT}"', config.read_text())
         for section, key, value in [
             ('auth', 'site_url', '"http://127.0.0.1:3000"'),
-            ('auth', 'additional_redirect_urls', json.dumps([SITE])),
+            ('auth', 'additional_redirect_urls', json.dumps([SITE, SITE + '?flow=recovery'])),
             ('auth', 'minimum_password_length', '8'),
             ('auth.email', 'enable_confirmations', 'true'),
             ('auth.mfa.totp', 'enroll_enabled', 'true'),

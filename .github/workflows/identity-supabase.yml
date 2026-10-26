@@ -1,0 +1,50 @@
+name: Identity migration - isolated Supabase
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/identity-supabase.yml'
+      - 'supabase/**'
+      - 'scripts/check-identity-migration.py'
+permissions:
+  contents: read
+concurrency:
+  group: identity-supabase-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  supabase:
+    name: Real Auth, PostgREST, MFA and concurrency
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install pinned official CLI with checksum verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ja-supabase-cli
+          cd /tmp/ja-supabase-cli
+          base=https://github.com/supabase/cli/releases/download/v2.122.0
+          curl --fail --silent --show-error --location --proto '=https' "$base/supabase_2.122.0_linux_amd64.tar.gz" -o supabase_2.122.0_linux_amd64.tar.gz
+          curl --fail --silent --show-error --location --proto '=https' "$base/checksums.txt" -o checksums.txt
+          grep ' supabase_2.122.0_linux_amd64.tar.gz$' checksums.txt > selected.sha256
+          sha256sum --check selected.sha256
+          tar -xzf supabase_2.122.0_linux_amd64.tar.gz supabase
+          echo /tmp/ja-supabase-cli >> "$GITHUB_PATH"
+      - name: Static validation
+        run: |
+          python3 scripts/check-identity-migration.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s supabase/tests/integration -p 'test_*.py' -v
+      - name: Run disposable local Supabase integration
+        run: python3 supabase/tests/integration/run.py
+      - name: Scope of this check
+        if: always()
+        run: |
+          {
+            echo '## Supabase local integration'
+            echo 'Disposable project only; synthetic users; no repository secrets or production connections.'
+            echo 'Check job annotations for individual assertions and failures. No tokens, mail bodies, passwords or TOTP secrets are logged.'
+            echo 'No permission to apply the migration to the principal project is implied.'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -18,7 +18,7 @@ na aplicação nem na migração para obter esse resultado.
 - Login por e-mail/senha pelo formulário.
 - Recuperação pelo formulário, link de recuperação e definição de nova senha.
 - Rejeição da senha antiga e acesso com a nova senha.
-- Logout, navegação direta a `/conta` e retorno pelo histórico sem restaurar a área
+- Logout, navegação direta a `/conta` e `/redefinir-senha` e retorno pelo histórico sem restaurar a área
   autenticada; remoção dos cookies de sessão.
 - Cookies de produção HttpOnly/Secure/SameSite=Lax e ausência dos cookies de sessão
   em `document.cookie`.

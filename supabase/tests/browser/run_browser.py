@@ -157,6 +157,11 @@ def logout(page):
     page.wait_for_url(APP + '/login')
     check(page.get_by_text('Sua sessão foi validada.', exact=True).count() == 0,
           'browser', 'voltar no histórico não restaura página autenticada')
+    page.goto(APP + '/redefinir-senha')
+    page.wait_for_url(APP + '/recuperar-senha')
+    check(page.get_by_role('button', name='Salvar nova senha', exact=True).count() == 0,
+          'browser', 'redefinição protegida também bloqueada após logout')
+    page.goto(APP + '/login')
 
 
 def login(page, email, password, accepted=True):

@@ -16,6 +16,17 @@ TARGET = 'ja-backup-target'
 TIMINGS = {}
 
 
+def report_check(ok, label):
+    if not ok:
+        raise local.Failure(label)
+    local.COUNT += 1
+    print(f'PASS {local.COUNT}: {label}', flush=True)
+
+
+# Reserve annotations for the final aggregate result; no individual-record output.
+local.check = report_check
+
+
 class Stack(local.Stack):
     def __init__(self, work, project):
         super().__init__(work)
@@ -43,6 +54,8 @@ def fingerprint(stack):
     # Digests only in memory, never logs. Includes data, owners, grants, RLS, policies,
     # constraints and triggers; no auth records are printed.
     queries = {
+        'schemas': "select nspname,nspowner::regrole::text,nspacl::text from pg_namespace where nspname in ('public','ja_private') order by 1",
+        'columns': "select n.nspname,c.relname,a.attname,a.attacl::text,a.attnotnull,pg_get_expr(d.adbin,d.adrelid) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace left join pg_attrdef d on d.adrelid=c.oid and d.adnum=a.attnum where n.nspname in ('public','ja_private') and c.relkind='r' and a.attnum>0 and not a.attisdropped order by 1,2,3",
         'tables': "select c.relname,c.relrowsecurity,c.relforcerowsecurity,c.relowner::regrole::text,c.relacl::text from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','ja_private') and c.relkind='r' order by 1",
         'functions': "select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),p.prosecdef,p.proconfig,p.proowner::regrole::text,p.proacl::text,pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','ja_private') order by 1,2,3",
         'policies': "select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname in ('public','ja_private') order by 1,2,3",

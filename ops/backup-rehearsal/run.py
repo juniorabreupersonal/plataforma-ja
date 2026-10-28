@@ -1,6 +1,9 @@
 """Synthetic-only recovery rehearsal. No remote targets, .env, secrets or artifacts."""
 from pathlib import Path
 import hashlib
+import base64
+import hmac
+import struct
 import json
 import os
 import tempfile
@@ -68,13 +71,18 @@ def run(source, target, backup):
     source.sql("notify pgrst, 'reload schema';")
     owner = source.signup('backup-owner')
     other = source.signup('backup-outsider')
+    professional = source.signup('backup-professional')
     owner2 = source.mfa(owner)
     source.sql("select ja_private.bootstrap_owner('" + owner['user']['id'] + "','Synthetic backup rehearsal');")
     org = source.rpc('ja_create_organization', owner2, {'p_name': 'Synthetic backup organization'})
     membership = source.rpc('ja_invite_member', owner2, {'p_org': org, 'p_user': first['user']['id'], 'p_role': 'student', 'p_reason': 'Synthetic backup invitation'})
     source.rpc('ja_accept_membership', first, {'p_id': membership})
+    professional_membership = source.rpc('ja_invite_member', owner2, {'p_org': org, 'p_user': professional['user']['id'], 'p_role': 'professional', 'p_reason': 'Synthetic professional invitation'})
+    source.rpc('ja_accept_membership', professional, {'p_id': professional_membership})
+    care = source.rpc('ja_request_care', professional, {'p_org': org, 'p_professional': professional['user']['id'], 'p_student': first['user']['id']})
+    source.rpc('ja_accept_care', first, {'p_id': care})
     source.sql("create schema if not exists supabase_migrations; create table if not exists supabase_migrations.schema_migrations(version text primary key, statements text[], name text); insert into supabase_migrations.schema_migrations(version,name,statements) values ('202610250001','identity_foundation',array['synthetic rehearsal tracking record']); create role ja_backup_synthetic nologin; grant usage on schema public to ja_backup_synthetic;")
-    local.check(source.value('select count(*) from public.profiles;') == '3', 'três perfis sintéticos antes do backup')
+    local.check(source.value('select count(*) from public.profiles;') == '4', 'quatro perfis sintéticos antes do backup')
     # Stop writers, not the source database. CLI dump uses only a named local stack.
     for service in ['auth', 'rest']:
         local.command(['docker', 'stop', f'supabase_{service}_{SOURCE}'], 'pausar escritores locais')
@@ -112,6 +120,14 @@ def run(source, target, backup):
     local.check(target.value("select has_schema_privilege('ja_backup_synthetic','public','usage');") == 't', 'privilégio do papel sintético preservado')
     local.check(target.value("select count(*) from public.profiles p left join auth.users u on u.id=p.user_id where u.id is null;") == '0', 'nenhum perfil órfão')
     local.check(target.value("select count(*) from public.organization_memberships m left join public.profiles p on p.user_id=m.user_id left join public.organizations o on o.id=m.organization_id where p.user_id is null or o.id is null;") == '0', 'relacionamentos restaurados sem órfãos')
+    for statement, state, label in [
+        ("insert into public.profiles(user_id) values ('00000000-0000-0000-0000-000000000999');", '23503', 'FK restaurada rejeita perfil sem usuário Auth'),
+        ("insert into public.profiles(user_id) values ('" + first['user']['id'] + "');", '23505', 'PK restaurada impede perfil duplicado'),
+        ("update public.profiles set status='invalid' where user_id='" + first['user']['id'] + "';", '23514', 'CHECK restaurado rejeita estado inválido'),
+        ("delete from public.profiles where user_id='" + first['user']['id'] + "';", '42501', 'trigger restaurado preserva histórico contra exclusão'),
+    ]:
+        result = target.sql(statement, required=False)
+        local.check(result.returncode != 0 and state in result.stderr, label)
     target.sql("notify pgrst, 'reload schema';")
     time.sleep(2)
     one, two = login(target, first), login(target, other)
@@ -123,8 +139,25 @@ def run(source, target, backup):
     status, _, _ = target.api('/rest/v1/profiles?user_id=eq.' + one['user']['id'], one, 'PATCH', {'status': 'suspended'})
     local.check(status == 403, 'RLS e grants restaurados impedem alteração de campo protegido')
     target.rpc('ja_create_organization', login(target, owner), {'p_name': 'AAL1 denied after restore'}, expected=403)
-    status, factors, _ = target.api('/auth/v1/factors', login(target, owner))
-    local.check(status == 200 and any(f['status'] == 'verified' for f in factors.get('totp', [])), 'Auth reconhece fator TOTP verificado restaurado')
+    owner1 = login(target, owner)
+    # Challenge the ORIGINAL factor using its original synthetic secret, not a new enrollment.
+    factor = source.synthetic_factor
+    status, challenge, _ = target.api('/auth/v1/factors/' + factor['id'] + '/challenge', owner1, 'POST', {})
+    local.check(status == 200, 'Auth cria desafio para fator TOTP restaurado')
+    if time.time() % 30 > 26:
+        time.sleep(4)
+    secret = factor['totp']['secret'].upper()
+    key = base64.b32decode(secret + '=' * (-len(secret) % 8))
+    digest = hmac.new(key, struct.pack('>Q', int(time.time()) // 30), hashlib.sha1).digest()
+    offset = digest[-1] & 15
+    code = str((struct.unpack('>I', digest[offset:offset + 4])[0] & 0x7fffffff) % 1000000).zfill(6)
+    status, owner_restored2, _ = target.api('/auth/v1/factors/' + factor['id'] + '/verify', owner1, 'POST', {'challenge_id': challenge['id'], 'code': code})
+    local.check(status == 200 and bool(owner_restored2.get('access_token')), 'MFA restaurado valida TOTP original e emite nova sessão')
+    target.rpc('ja_create_organization', owner_restored2, {'p_name': 'Synthetic restored AAL2'})
+    local.check(len(target.rows('care_relationships', one)) == 1, 'aluno mantém vínculo restaurado')
+    local.check(len(target.rows('care_relationships', login(target, professional))) == 1, 'profissional autorizado mantém vínculo restaurado')
+    local.check(target.rows('care_relationships', two) == [], 'terceiro não vê vínculo restaurado')
+    local.check(target.rows('care_relationships', owner_restored2) == [], 'proprietário não obtém acesso assistencial após restauração')
     status, refreshed, _ = target.api('/auth/v1/token?grant_type=refresh_token', method='POST', body={'refresh_token': first['refresh_token']})
     local.check(status == 200 and bool(refreshed.get('access_token')), 'refresh token sintético anterior ao backup funciona no destino local')
     before_count = int(target.value('select count(*) from public.profiles;'))

@@ -10,8 +10,8 @@ O workflow usa CLI 2.122.0 verificada por checksum, PostgreSQL 17, projetos loca
 
 ## Procedimento automatizado
 
-1. Iniciar Supabase local real; cadastrar e confirmar três contas `@example.test` pelo SMTP local, incluindo usuário anterior à migração.
-2. Aplicar apenas a fixture local; testar MFA e criar organização, participação e auditoria sintéticas. Criar papel NOLOGIN e um registro sintético no formato do histórico CLI (não representa execução de `db push`).
+1. Iniciar Supabase local real; cadastrar e confirmar quatro contas `@example.test` pelo SMTP local, incluindo usuário anterior à migração.
+2. Aplicar apenas a fixture local; testar MFA e criar organização, participações, vínculo aluno-profissional e auditoria sintéticos. Criar papel NOLOGIN e um registro sintético no formato do histórico CLI (não representa execução de `db push`).
 3. Parar Auth/PostgREST da origem, evitando escritores durante os dumps. Obter definição do trigger personalizado de `auth.users` pelo catálogo.
 4. Executar `supabase db dump --local --file ... --role-only`; dump de estrutura dos schemas `public,ja_private,supabase_migrations`; dump de dados com `--data-only --use-copy` incluindo também `auth`. Os schemas internos nativos são fornecidos pelo destino da mesma versão; não copiar o tracker interno de migrações do Auth.
 5. Calcular hashes SHA-256, parar origem e iniciar destino com outro identificador/volume. Validar destino vazio e hashes antes da carga.
@@ -32,7 +32,7 @@ Resultados integrados e tempos serão registrados após a execução. Anotaçõe
 - Não inclui SMTP externo, OAuth, webhooks, Edge Functions, Vault/pgsodium, chaves de assinatura hospedadas ou configurações do painel.
 - O destino usa a mesma versão/infraestrutura local. Não prova restauração entre versões, em projeto hospedado Free ou sobre banco com conteúdo.
 - Ensaio sintético não mede volume, bloqueios ou RTO reais. Não é backup nem ensaio de contas reais.
-- MFA: matrícula/desafio na origem e persistência do fator verificado no destino; validações adicionais serão explicitadas no relatório. Não implica migração de chaves de projetos hospedados.
+- MFA: matrícula/desafio na origem e novo desafio do fator original no destino, com acesso administrativo AAL2 e negação AAL1. Não implica migração de chaves de projetos hospedados.
 - Checks de integridade são explícitos, pois a carga com replication role replica ignora triggers. Não tornar `replica` uma configuração permanente.
 
 ## Referências oficiais

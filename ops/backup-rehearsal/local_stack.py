@@ -218,6 +218,7 @@ class Stack:
     def mfa(self, user):
         status, factor, _ = self.api('/auth/v1/factors', user, 'POST', {'factor_type': 'totp', 'friendly_name': 'Synthetic integration'})
         check(status == 200, 'MFA TOTP matriculado no Auth real')
+        self.synthetic_factor = factor
         status, challenge, _ = self.api('/auth/v1/factors/' + factor['id'] + '/challenge', user, 'POST', {})
         check(status == 200, 'desafio MFA criado')
         if time.time() % 30 > 27:

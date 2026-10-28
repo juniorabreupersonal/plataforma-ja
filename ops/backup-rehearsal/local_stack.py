@@ -232,4 +232,3 @@ class Stack:
         claims = json.loads(base64.urlsafe_b64decode(payload + '=' * (-len(payload) % 4)))
         check(claims['aal'] == 'aal2', 'Auth emitiu JWT AAL2 após MFA real')
         return session
-

@@ -98,7 +98,7 @@ def run(source, target, backup):
     started = time.monotonic()
     # Preserve least privilege: CLI docs warn target defaults otherwise add grants.
     # No real project involved. Managed Auth schema comes from the same CLI build.
-    sql = "begin; alter default privileges in schema public revoke all on tables from anon, authenticated;\n"
+    sql = "begin; alter default privileges in schema public revoke all on tables from public, anon, authenticated, service_role; alter default privileges in schema public revoke all on functions from public, anon, authenticated, service_role;\n"
     sql += (backup / 'roles.sql').read_text() + '\n' + (backup / 'schema.sql').read_text() + '\n'
     sql += (backup / 'data.sql').read_text() + '\n'
     # CLI data dump uses replica role; restore always resets it before custom trigger/tests.

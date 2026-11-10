@@ -32,6 +32,7 @@ def fingerprint(stack):
     # Digests only in memory, never logs. Includes data, owners, grants, RLS, policies,
     # constraints and triggers; no auth records are printed.
     queries = {
+        'custom_role_attributes': "select rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit from pg_roles where rolname='ja_native_synthetic'",
         'native_auth_functions': "select p.proname,pg_get_function_identity_arguments(p.oid),p.prosecdef,p.proconfig,p.proowner::regrole::text,p.proacl::text,pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='auth' order by 1,2",
         'native_auth_tables': "select c.relname,c.relrowsecurity,c.relforcerowsecurity,c.relowner::regrole::text,c.relacl::text from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='auth' and c.relkind='r' order by 1",
         'native_auth_policies': "select tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname='auth' order by 1,2",

@@ -229,6 +229,7 @@ def encrypted_recovery(backup, timings):
 
 
 def backup_native(source, backup, timings):
+    local.check(source.value("select count(*) from pg_tablespace where spcname not in ('pg_default','pg_global');") == '0', 'inventário sem tablespaces personalizados; nenhum tablespace global a recriar')
     versions = [source.client(p, ['--version'], connect=False).stdout.strip() for p in ('pg_dump', 'pg_restore', 'psql', 'pg_dumpall')]
     local.check(all(re.search(r'\b17\.', v) for v in versions), 'quatro clientes nativos PostgreSQL 17 disponíveis no host')
     print('Native versions: ' + '; '.join(versions), flush=True)

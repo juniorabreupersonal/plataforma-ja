@@ -131,7 +131,8 @@ def select_toc(text):
                 continue
             selected.append(line)
         elif schema == '-' and kind in ('ACL', 'COMMENT', 'SECURITY LABEL'):
-            if any(name.startswith('SCHEMA ' + s + ' ') for s in SCHEMAS):
+            if any(name.startswith('SCHEMA ' + spelling + ' ')
+                   for s in SCHEMAS for spelling in (s, '"' + s + '"')):
                 selected.append(line)
         elif schema == 'auth':
             if kind == 'TABLE DATA' and not name.startswith('schema_migrations '):

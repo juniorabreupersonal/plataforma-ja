@@ -125,6 +125,10 @@ def select_toc(text):
             # Schemas are provisioned explicitly with source ownership in schema-setup.sql.
             continue
         if schema in SCHEMAS:
+            # Supabase's own defaults already belong to the initialized target.
+            if kind == 'DEFAULT ACL' and name.endswith(' supabase_admin'):
+                managed += 1
+                continue
             selected.append(line)
         elif schema == '-' and kind in ('ACL', 'COMMENT', 'SECURITY LABEL'):
             if any(name.startswith('SCHEMA ' + s + ' ') for s in SCHEMAS):
@@ -228,8 +232,23 @@ def backup_native(source, backup, timings):
     versions = [source.client(p, ['--version'], connect=False).stdout.strip() for p in ('pg_dump', 'pg_restore', 'psql', 'pg_dumpall')]
     local.check(all(re.search(r'\b17\.', v) for v in versions), 'quatro clientes nativos PostgreSQL 17 disponíveis no host')
     print('Native versions: ' + '; '.join(versions), flush=True)
-    setup = source.value("select string_agg(format('CREATE SCHEMA IF NOT EXISTS %I; ALTER SCHEMA %I OWNER TO %I;',nspname,nspname,pg_get_userbyid(nspowner)), E'\\n' order by nspname) from pg_namespace where nspname in ('public','ja_private','supabase_migrations');")
-    (backup / 'schema-setup.sql').write_text(setup + '\n')
+    schemas = json.loads(source.value("select json_agg(json_build_object('name',nspname,'owner',pg_get_userbyid(nspowner)) order by nspname) from pg_namespace where nspname in ('public','ja_private','supabase_migrations');"))
+    setup = []
+    for item in schemas:
+        name, owner = item['name'], item['owner']
+        if name not in SCHEMAS or not re.fullmatch(r'[a-z_][a-z0-9_]{0,62}', owner):
+            raise local.Failure('Propriedade de schema não revisada')
+        # Keep already-provisioned managed ownership; never try to SET ROLE to its owner.
+        setup.append(f"""DO $ja_restore$ BEGIN
+IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='{name}') THEN
+ IF (SELECT pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname='{name}') <> '{owner}' THEN
+  RAISE EXCEPTION 'Unexpected schema ownership' USING ERRCODE='42501';
+ END IF;
+ELSE
+ CREATE SCHEMA "{name}" AUTHORIZATION "{owner}";
+END IF;
+END $ja_restore$;""")
+    (backup / 'schema-setup.sql').write_text('\n'.join(setup) + '\n')
     started = time.monotonic()
     source.client('pg_dump', ['--format=custom', '--quote-all-identifiers', '--file=' + str(backup / 'database.dump'),
                              '--schema=auth', '--schema=public', '--schema=ja_private', '--schema=supabase_migrations'])

@@ -42,6 +42,8 @@ class Safety(unittest.TestCase):
 5; 2620 126 TRIGGER auth users ja_provision_profile postgres
 6; 1259 127 TABLE public profiles postgres
 7; 0 0 ACL - SCHEMA public pg_database_owner
+8; 826 128 DEFAULT ACL public DEFAULT PRIVILEGES FOR FUNCTIONS supabase_admin
+9; 826 129 DEFAULT ACL public DEFAULT PRIVILEGES FOR FUNCTIONS postgres
 '''
         selected = native.select_toc(toc)
         self.assertNotIn('TABLE auth users', selected)
@@ -49,6 +51,8 @@ class Safety(unittest.TestCase):
         self.assertIn('TABLE DATA auth users', selected)
         self.assertIn('TRIGGER auth users ja_provision_profile', selected)
         self.assertIn('ACL - SCHEMA public', selected)
+        self.assertNotIn('FUNCTIONS supabase_admin', selected)
+        self.assertIn('FUNCTIONS postgres', selected)
 
     def test_unknown_toc_fails_closed(self):
         with self.assertRaises(local.Failure):

@@ -75,7 +75,11 @@ class Stack(local.Stack):
     def client(self, program, flags=(), stdin=None, required=True, connect=True):
         if program not in ('psql', 'pg_dump', 'pg_dumpall', 'pg_restore'):
             raise local.Failure('Cliente PostgreSQL fora da lista permitida')
-        args = [str(BIN / program)] + (pg_args() if connect else []) + list(flags)
+        connection_flags = pg_args() if connect else []
+        if program == 'pg_dumpall':
+            # Unlike psql/pg_dump, pg_dumpall --dbname expects a conninfo string.
+            connection_flags = ['--database=postgres' if f == '--dbname=postgres' else f for f in connection_flags]
+        args = [str(BIN / program)] + connection_flags + list(flags)
         return execute(args, 'cliente nativo ' + program, stdin, self.env, required)
 
     def sql(self, sql, required=True):

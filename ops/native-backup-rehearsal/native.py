@@ -35,7 +35,20 @@ def execute(args, phase, stdin=None, env=None, required=True):
                             timeout=600, env=env or clean_environment())
     if required and result.returncode:
         code = re.search(r'ERROR:\s+([0-9A-Z]{5})', result.stderr)
-        raise local.Failure(phase + (f' (SQLSTATE {code[1]})' if code else f' (exit {result.returncode})'))
+        location = re.search(r'/(prepare|pre-data|data|post-data)\.sql:(\d+):', result.stderr)
+        context = f' [{location[1]}.sql:{location[2]}]' if location else ''
+        for fragment, label in (
+            ('must be superuser', 'superuser required'),
+            ('permission denied to set parameter', 'parameter permission'),
+            ('must be owner', 'ownership permission'),
+            ('permission denied for schema', 'schema permission'),
+            ('permission denied for table', 'table permission'),
+            ('permission denied to change default privileges', 'default privileges permission'),
+        ):
+            if fragment in result.stderr:
+                context += ' [' + label + ']'
+                break
+        raise local.Failure(phase + (f' (SQLSTATE {code[1]})' if code else f' (exit {result.returncode})') + context)
     return result
 
 
@@ -139,6 +152,9 @@ def custom_roles(text):
              or line.startswith('ALTER ROLE "' + CUSTOM_ROLE + '" WITH ')]
     if len(lines) != 2 or 'NOLOGIN' not in lines[1] or 'PASSWORD' in lines[1]:
         raise local.Failure('Definição inesperada do papel sintético')
+    # Supabase CLI's official role dump also removes these attributes: hosted
+    # postgres is privileged without necessarily being a PostgreSQL superuser.
+    lines = [line.replace(' NOSUPERUSER', '').replace(' NOREPLICATION', '') for line in lines]
     return '\n'.join(lines) + '\n'
 
 

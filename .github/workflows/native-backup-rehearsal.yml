@@ -1,0 +1,51 @@
+name: Native PostgreSQL encrypted recovery
+on:
+  pull_request:
+    branches: [main]
+    paths: ['ops/native-backup-rehearsal/**', '.github/workflows/native-backup-rehearsal.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-backup-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  native-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install pinned official CLI with checksum verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ja-supabase-cli
+          cd /tmp/ja-supabase-cli
+          base=https://github.com/supabase/cli/releases/download/v2.122.0
+          curl --fail --silent --show-error --location --proto '=https' "$base/supabase_2.122.0_linux_amd64.tar.gz" -o supabase_2.122.0_linux_amd64.tar.gz
+          curl --fail --silent --show-error --location --proto '=https' "$base/checksums.txt" -o checksums.txt
+          grep ' supabase_2.122.0_linux_amd64.tar.gz$' checksums.txt > selected.sha256
+          sha256sum --check selected.sha256
+          tar -xzf supabase_2.122.0_linux_amd64.tar.gz supabase
+          echo /tmp/ja-supabase-cli >> "$GITHUB_PATH"
+      - name: Install native PostgreSQL clients and encryption tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/lib/postgresql/17/bin/pg_dump; then
+            sudo install -d /usr/share/postgresql-common/pgdg
+            curl --fail --silent --show-error --proto '=https' https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /tmp/ja-pgdg.asc
+            sudo install -m 644 /tmp/ja-pgdg.asc /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+            echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main' | sudo tee /etc/apt/sources.list.d/ja-pgdg.list >/dev/null
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends postgresql-client-17
+          fi
+          command -v gpg
+          command -v gpgconf
+          /usr/lib/postgresql/17/bin/pg_dump --version
+      - name: Safety checks
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ops/native-backup-rehearsal -p 'test_*.py' -v
+      - name: Native backup, encryption and restore between disposable stacks
+        run: PYTHONDONTWRITEBYTECODE=1 python3 ops/native-backup-rehearsal/run.py

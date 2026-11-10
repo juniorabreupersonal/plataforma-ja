@@ -18,11 +18,11 @@ Projetos `ja-native-source` e `ja-native-target` usam volumes diferentes e as me
 
 1. Criar quatro contas sintéticas confirmadas, uma anterior à fixture. Provisionar perfis, proprietário **somente sintético**, MFA, organização, participações aluno/profissional e vínculo, mais auditoria.
 2. Criar papel personalizado NOLOGIN e um registro sintético de histórico no formato CLI. Parar Auth/PostgREST da origem para evitar escritores durante captura/dumps.
-3. Gerar `database.dump` com `pg_dump --format=custom`, incluindo schemas `auth`, `public`, `ja_private`, `supabase_migrations`. Capturar configuração de propriedade dos três schemas da aplicação. Exportar `roles.sql` com `pg_dumpall --roles-only --no-role-passwords`.
+3. Gerar `database.dump` com `pg_dump --format=custom`, incluindo schemas `auth`, `public`, `ja_private`, `supabase_migrations`. Capturar configuração de propriedade dos três schemas da aplicação: criar os ausentes e conferir os existentes, sem tentar reassociar proprietários gerenciados. Exportar `roles.sql` com `pg_dumpall --roles-only --no-role-passwords`.
 4. Empacotar arquivo custom, papéis, preparação e manifesto SHA-256. Criptografar com GnuPG AES-256, senha aleatória em memória enviada por stdin, nunca em argumentos/logs. Diretório GPG temporário e sem cache simétrico.
 5. Apagar os originais em claro antes de recuperar. Comprovar falha com senha errada e pacote adulterado; rejeitar/apagar saídas desses testes. Descriptografar o original e validar todos os hashes. Extração aceita apenas quatro nomes fixos e arquivos regulares.
-6. Inicializar outro Supabase. Comprovar que falta o papel global: o arquivo de banco não cria papéis e um grant para esse papel falha. Recriar **somente o papel sintético permitido**, nunca todos os papéis reservados exportados.
-7. Usar `pg_restore --list` e lista revisada de objetos para distinguir definições nativas do Auth de dados/customizações. Deixar o schema nativo e `auth.schema_migrations` sob responsabilidade do destino da mesma versão. Restaurar dados Auth, posições de sequências e explicitamente `auth.users/ja_provision_profile`.
+6. Inicializar outro Supabase. Comprovar que falta o papel global: o arquivo de banco não cria papéis e um grant para esse papel falha. Recriar **somente o papel sintético permitido**, nunca todos os papéis reservados exportados. Remover os atributos negativos NOSUPERUSER/NOREPLICATION que exigem tratamento especial, como faz o exportador oficial da CLI; comparar os atributos efetivos do papel restaurado com a origem. O inventário confirmou ausência de tablespaces personalizados: não foi necessário recriar outros objetos globais.
+7. Usar `pg_restore --list` e lista revisada de objetos para distinguir definições nativas do Auth de dados/customizações. Deixar o schema nativo, seus defaults de privilégios pertencentes ao supabase_admin e `auth.schema_migrations` sob responsabilidade do destino da mesma versão. Comparar ACLs em ordem canônica, preservando grantee, grantor e opções de concessão, incluindo defaults implícitos; aceitar nomes de schema citados ou não na TOC. Restaurar dados Auth, posições de sequências e explicitamente `auth.users/ja_provision_profile`.
 8. `pg_restore` gera SQL pré-dados/dados/pós-dados a partir do archive recuperado. **A execução final é por `psql` nativo**, em transação única e `ON_ERROR_STOP`. Manter restrição de defaults; carregar dados com replication role replica na sessão de teste e voltar a origin antes dos objetos pós-dados. Não ignorar erros nem descartar ACL/owners para forçar sucesso.
 9. Comparar dados/digests, schemas/owners/grants, permissões de colunas, funções/search_path/SECURITY DEFINER, RLS, constraints, índices, triggers, defaults de privilégios e histórico. Comparar definições/grants/RLS nativos do Auth para detectar incompatibilidade entre os stacks. Validar rejeição de FK/PK/CHECK/exclusão e novas operações de auditoria.
 10. Testar Auth e PostgREST com JWT real: senha original, refresh anterior ao backup, desafio do fator MFA original, AAL2 permitido/AAL1 negado, perfis/vínculos isolados e novo cadastro/confirmacão com criação de perfil sem privilégios.
@@ -44,7 +44,27 @@ Projetos `ja-native-source` e `ja-native-target` usam volumes diferentes e as me
 
 Verificações locais sem serviços: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ops/native-backup-rehearsal -p 'test_*.py' -v`.
 
-O executor integrado exige `GITHUB_ACTIONS=true` e runner descartável. Resultados, falhas/ajustes e tempos serão registrados após execução. Não reutilizar este script com dados reais nem adaptar endpoints para o projeto principal.
+O executor integrado exige `GITHUB_ACTIONS=true` e runner descartável. **Aprovado: 145 verificações integradas e 12 testes unitários de segurança**, na [execução 42727249249](https://github.com/juniorabreupersonal/plataforma-ja/actions/runs/42727249249), commit `8c26b2d99f1b47b596cd0fce7e82b0f331177a0f`. Não reutilizar este script com dados reais nem adaptar endpoints para o projeto principal.
+
+| Medida na execução registrada | Tempo |
+|---|---:|
+| Exportação nativa do banco e papéis | 0,156 s |
+| Criptografia, recuperação e testes negativos | 1,262 s |
+| Carga SQL transacional | 0,124 s |
+| Carga e validações posteriores | 4,036 s |
+| Inicialização do destino, carga e validações | 29,801 s |
+
+O pacote recuperado foi a única origem dos arquivos usados na restauração; senha incorreta e adulteração foram rejeitadas. Ambos os stacks foram encerrados e o diretório temporário removido, sem upload de artefatos.
+
+### Erros encontrados e ajustes
+
+1. `pg_dumpall --dbname=postgres` falhou: ao contrário de psql/pg_dump, essa opção espera uma string conninfo no pg_dumpall. Corrigido para `--database=postgres`; sem senha em argumentos.
+2. A exportação nativa de papéis traz atributos que a CLI adapta. Aplicado o tratamento oficial para NOSUPERUSER/NOREPLICATION apenas no papel NOLOGIN sintético selecionado, sem elevar privilégios. Comparação posterior confirmou atributos do papel iguais aos da origem.
+3. A preparação tentou reaplicar proprietário de schema já gerenciado e recebeu 42501. Corrigido para conferir a propriedade existente e criar somente schemas ausentes. Defaults de supabase_admin são fornecidos pelo stack nativo; não se tenta alterá-los como operador comum.
+4. A comparação detectou permissões ausentes nos schemas public e ja_private. A TOC com `--quote-all-identifiers` apresentava nomes entre aspas, não reconhecidos pelo filtro original. Corrigido o reconhecimento com teste de regressão para as duas formas. Não foram removidas ACLs das verificações nem usados `--no-acl`/`--no-owner` para forçar aprovação.
+5. A comparação de ACLs passou a tratar a ordem de armazenamento e defaults implícitos sem perder informações de concessão. Ao final, os catálogos e dados comparados foram equivalentes; Auth, MFA, novo provisionamento e isolamento por API também passaram.
+
+Não houve defeito identificado na migração original e nenhum ajuste de aplicação foi necessário. Esses achados demonstram por que o archive nativo não deve ser restaurado integralmente e sem revisão sobre um Supabase hospedado.
 
 Medidas: exportação nativa; criptografia/descriptografia/testes; carga SQL; carga + verificações; inicialização do destino + carga + verificações. Nenhuma é promessa de RTO/RPO real.
 

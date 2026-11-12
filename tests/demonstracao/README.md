@@ -17,3 +17,9 @@ O navegador permite tráfego só para a aplicação loopback, testa desktop 1440
 Não foram implementados MFA visual, autorização por função, gestão, cadastro de alunos, avaliações ou persistência. Esses recursos dependem das próximas entregas e da migração revisada, com RLS e autorização servidor. Não publicar esta demonstração como atendimento real.
 
 Validação inicial: build aprovado, 18 testes existentes de autenticação aprovados e 131 assertivas em Chromium real nas três larguras. Lint sem erros; permanece o aviso anterior de import não usado em `src/app/teste-supabase/page.tsx`. A inspeção visual de capturas desktop/celular foi realizada; não equivale a auditoria completa de acessibilidade. Identificadores de âncoras são únicos por painel para conviver com páginas preservadas pelo cache do Next.js.
+
+## Paleta Roxo Equilibrado
+
+A atualização visual usa a fonte única `tokens.ts` e classes prefixadas em `theme.css`, devido ao loader CSS atual. O CSS não altera as páginas fora de `.ja-demo`. O logotipo gráfico original não foi encontrado: permanece a identificação textual, sem redesenho ou recoloração de marca original.
+
+Nova página `/demonstracao/identidade` e [exemplos visuais para revisão](VISUAL.md), com capturas estáticas fictícias versionadas. O workflow continua sem upload de capturas/traces/sessões. A versão atual do navegador executa 178 assertivas, acrescentando paleta, ação azul, contrastes selecionados de texto (mínimo 4,5:1), contraste não textual do detalhe roxo (mínimo 3:1) e revisão da página de identidade em 1440/390/320 px. Isso não autoriza atendimento, publicação ou aprovação definitiva dos painéis.

@@ -22,6 +22,34 @@ def check(value, label):
     print('PASS: ' + label, flush=True)
 
 
+def palette_checks(page):
+    page.mouse.move(0, 0)  # Measure the base state, independently from the previous click.
+    result = page.get_by_role('main').evaluate("""main => {
+      const frame = main.closest('[style]');
+      const style = getComputedStyle(frame);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      const rgba = color => { ctx.clearRect(0,0,1,1); ctx.fillStyle=color; ctx.fillRect(0,0,1,1); return [...ctx.getImageData(0,0,1,1).data]; };
+      const lum = color => rgba(color).slice(0,3).map(v => {v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;}).reduce((s,v,i)=>s+v*[0.2126,0.7152,0.0722][i],0);
+      const ratio = (a,b) => (Math.max(lum(a),lum(b))+0.05)/(Math.min(lum(a),lum(b))+0.05);
+      const token = name => style.getPropertyValue('--ja-'+name).trim().toUpperCase();
+      const action = main.querySelector('a');
+      const actionStyle = getComputedStyle(action);
+      const muted = getComputedStyle(main.querySelector('section ul p')).color;
+      return {
+        tokens: ['blue','purple','graphite','black','metal','white'].map(token),
+        action: rgba(actionStyle.backgroundColor),
+        textContrast: [ratio(actionStyle.color,actionStyle.backgroundColor),ratio(token('white'),token('graphite')),ratio(token('metal'),token('graphite')),ratio(muted,token('graphite'))],
+        indicatorContrast: ratio(token('purple'),token('graphite'))
+      };
+    }""")
+    check(result['tokens'] == ['#0B5ED7','#7B61C9','#1E1E1E','#080808','#E5E7EB','#FFFFFF'], 'paleta aprovada aplicada pelos tokens comuns')
+    check(result['action'] == [11,94,215,255], f'ação principal usa Azul Performance: {result["action"]}')
+    check(all(value >= 4.5 for value in result['textContrast']), 'pares de texto avaliados atendem contraste AA de 4,5:1')
+    check(result['indicatorContrast'] >= 3, 'detalhe roxo tem contraste não textual de pelo menos 3:1')
+
+
 def main():
     # Fail instead of reusing an unrelated running application.
     with socket.socket() as probe:
@@ -68,6 +96,7 @@ def main():
                     page.wait_for_url('**/demonstracao/' + profile)
                     check(page.get_by_role('note', name='Aviso de demonstração').is_visible(), f'{profile} {width}px: aviso fictício visível')
                     check(page.get_by_role('main').get_by_role('heading', level=1).count() == 1, f'{profile}: título principal único')
+                    palette_checks(page)
                     nav = page.get_by_role('navigation', name='Escolher painel de demonstração')
                     check(nav.get_by_role('link', name=label, exact=True).get_attribute('aria-current') == 'page', f'{profile}: perfil de exemplo identificado')
                     section_nav = page.get_by_role('navigation', name='Navegação do painel ' + label)
@@ -87,6 +116,17 @@ def main():
                     page.get_by_role('link', name='Voltar à apresentação dos painéis').click()
                     page.wait_for_url('**/demonstracao')
                     check(page.get_by_role('heading', level=1).is_visible(), f'{profile}: retorno à seleção')
+            page.get_by_role('link', name='Revisar identidade visual', exact=True).click()
+            page.wait_for_url('**/demonstracao/identidade')
+            check(page.get_by_role('heading', name='Roxo Equilibrado', level=1, exact=True).is_visible(), 'exemplos visuais disponíveis para revisão')
+            for color in ['#0B5ED7','#7B61C9','#1E1E1E','#080808','#E5E7EB','#FFFFFF']:
+                check(page.get_by_text(color, exact=True).is_visible(), 'amostra da paleta identificada por nome e valor')
+            check(page.get_by_text('O arquivo do logotipo original ainda precisa ser disponibilizado', exact=False).is_visible(), 'pendência do logotipo original informada sem redesenho')
+            for width in [1440,390,320]:
+                page.set_viewport_size({'width':width,'height':900})
+                check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), f'guia visual {width}px: sem overflow')
+                if os.environ.get('DEMO_SCREENSHOTS_DIR'):
+                    page.screenshot(path=str(Path(os.environ['DEMO_SCREENSHOTS_DIR']) / f'identidade-{width}.png'), full_page=True)
             page.goto(ORIGIN + '/demonstracao/profissional')
             page.keyboard.press('Tab')
             check(page.get_by_role('link', name='Pular para o conteúdo').evaluate('(el) => el === document.activeElement'), 'atalho de teclado para conteúdo')

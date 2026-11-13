@@ -1,4 +1,4 @@
-# Inspeção dos PNGs enviados — decisão técnica pendente
+# Inspeção inicial dos PNGs enviados — histórico
 
 Fonte: arquivo `Downloads.rar` enviado pelo proprietário. O pacote contém três logotipos PNG RGBA e uma prancha PNG RGB. Nenhum conteúdo da prancha foi interpretado como instrução de execução ou como funcionalidade já implementada.
 
@@ -26,7 +26,7 @@ Os arquivos foram extraídos e copiados sem qualquer processamento da imagem. No
 
 A ativação em cabeçalhos, menus compactos e apresentação **permanece pendente**, conforme a instrução do proprietário de apresentar divergências antes da incorporação definitiva. Os painéis continuam com identificação textual, sem substituição silenciosa. Nada foi aplicado às telas reais de autenticação ou ao favicon.
 
-Decisão necessária: autorizar uso dos arquivos exatamente como enviados, assumindo margens/contornos e possível baixa legibilidade em tamanhos compactos, ou fornecer exportações revisadas a partir da matriz aprovada (área útil, transparência limpa e lettering conferido). Qualquer recorte, limpeza, recoloração ou redesenho exigirá autorização própria; não foi executado.
+Na inspeção inicial não foi executado recorte ou limpeza. Depois, o proprietário autorizou cópias técnicas exclusivamente para comparação. Ver [refinamento autorizado, operações e antes/depois](REFINAMENTO.md). Os originais e os achados desta inspeção permanecem preservados; ativação nos painéis, recoloração e redesenho não estão autorizados.
 
 ## Prancha de comparação
 

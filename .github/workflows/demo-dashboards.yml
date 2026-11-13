@@ -28,7 +28,9 @@ jobs:
       - name: Install browser test tools
         run: |
           python3 -m venv /tmp/ja-demo-browser
-          /tmp/ja-demo-browser/bin/pip install playwright==1.64.1
+          /tmp/ja-demo-browser/bin/pip install playwright==1.64.1 -r tests/demonstracao/image-review-requirements.txt
           /tmp/ja-demo-browser/bin/python -m playwright install --with-deps chromium
+      - name: Verify lossless technical copies
+        run: /tmp/ja-demo-browser/bin/python tests/demonstracao/refine_brand.py
       - name: Real Chromium navigation and access denial
         run: /tmp/ja-demo-browser/bin/python tests/demonstracao/browser.py

@@ -99,6 +99,7 @@ def main():
                     check(page.get_by_role('note', name='Aviso de demonstração').is_visible(), f'{profile} {width}px: aviso fictício visível')
                     check(page.get_by_role('main').get_by_role('heading', level=1).count() == 1, f'{profile}: título principal único')
                     palette_checks(page)
+                    check(page.locator('header img').count() == 0, 'cópias técnicas não foram ativadas no cabeçalho')
                     nav = page.get_by_role('navigation', name='Escolher painel de demonstração')
                     check(nav.get_by_role('link', name=label, exact=True).get_attribute('aria-current') == 'page', f'{profile}: perfil de exemplo identificado')
                     section_nav = page.get_by_role('navigation', name='Navegação do painel ' + label)
@@ -123,7 +124,7 @@ def main():
             check(page.get_by_role('heading', name='Roxo Equilibrado', level=1, exact=True).is_visible(), 'exemplos visuais disponíveis para revisão')
             for color in ['#0B5ED7','#7B61C9','#1E1E1E','#080808','#E5E7EB','#FFFFFF']:
                 check(page.get_by_text(color, exact=True).is_visible(), 'amostra da paleta identificada por nome e valor')
-            check(page.get_by_role('heading', name='Logotipos recebidos — revisão técnica').is_visible(), 'achados de marca apresentados antes da ativação')
+            check(page.get_by_role('heading', name='Logotipos — comparação técnica antes e depois').is_visible(), 'achados de marca apresentados antes da ativação')
             for variant, width, height in [('horizontal',1448,1086),('vertical',1122,1402),('simbolo',1254,1254)]:
                 logo = page.get_by_role('main').locator(f'img[src="/brand/propostas/ja-{variant}.png"]').filter(visible=True)
                 logo.scroll_into_view_if_needed()
@@ -134,14 +135,30 @@ def main():
                 check(bool(logo.get_attribute('alt')), 'proposta de marca tem texto alternativo')
                 article = logo.locator('xpath=ancestor::article').first
                 article.locator('summary').click()
-                check(article.locator('details img').is_visible(), 'inspeção sobre fundo claro disponível sem alterar PNG')
-                check(article.locator('details img').evaluate('(img) => getComputedStyle(img).filter') == 'none', 'nenhum filtro de recoloração é aplicado')
+                check(article.locator('details img').count() == 2 and all(img.is_visible() for img in article.locator('details img').all()), 'originais e cópias disponíveis no fundo claro')
+                check(all(img.evaluate('(img) => getComputedStyle(img).filter') == 'none' for img in article.locator('details img').all()), 'nenhum filtro de recoloração é aplicado')
                 article.locator('summary').click()
                 manifest = json.loads((ROOT / 'tests/demonstracao/brand/manifest.json').read_text())
                 expected = next(item for item in manifest['files'] if item['variant'] == variant)
                 response = context.request.get(ORIGIN + expected['path'])
                 check(response.status == 200 and 'image/png' in response.headers.get('content-type',''), 'servidor entrega PNG original no endereço indicado')
                 check(hashlib.sha256(response.body()).hexdigest() == expected['sha256'], 'bytes servidos são idênticos ao PNG enviado')
+                copies = json.loads((ROOT / 'src/components/demonstracao/technical-copies.json').read_text())
+                revised = next(item for item in copies['variants'] if item['variant'] == variant)
+                image = article.locator(f'img[src="{revised["path"]}"]').filter(visible=True)
+                image.scroll_into_view_if_needed()
+                image.evaluate('(img) => img.decode()')
+                check(image.evaluate('(img) => img.naturalWidth') == revised['width'] and image.evaluate('(img) => img.naturalHeight') == revised['height'], 'cópia técnica carrega nas dimensões do manifesto')
+                dims = image.evaluate('(img) => ({w:img.width,h:img.height})')
+                check(abs(dims['w']/dims['h']-revised['width']/revised['height']) < 0.02, 'cópia técnica não sofre deformação')
+                response = context.request.get(ORIGIN + revised['path'])
+                check(response.status == 200 and hashlib.sha256(response.body()).hexdigest() == revised['sha256'], 'cópia técnica servida sem recompressão')
+            for size in [32,48,64]:
+                sample = page.get_by_role('img', name=f'Símbolo JA revisado na caixa de menu de {size} pixels, sem deformação')
+                sample.scroll_into_view_if_needed()
+                check(abs(sample.evaluate('(img) => img.getBoundingClientRect().width')-size) < 1, 'símbolo disponível em tamanho real de menu')
+            sample = page.get_by_role('img', name='Cópia técnica horizontal em tamanho de interface, não ativada')
+            check(sample.evaluate('(img) => img.width') <= 320, 'ensaio de cabeçalho respeita limite de 320px')
             if os.environ.get('DEMO_SCREENSHOTS_DIR'):
                 for summary in page.get_by_role('main').locator('summary').all():
                     summary.click()  # Capture both original compositing backgrounds for review.
@@ -150,6 +167,8 @@ def main():
                 check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), f'guia visual {width}px: sem overflow')
                 if os.environ.get('DEMO_SCREENSHOTS_DIR'):
                     page.screenshot(path=str(Path(os.environ['DEMO_SCREENSHOTS_DIR']) / f'identidade-{width}.png'), full_page=True)
+                    if width == 1440:
+                        page.get_by_role('region', name='Prévias em tamanhos de interface').screenshot(path=str(Path(os.environ['DEMO_SCREENSHOTS_DIR']) / 'marca-tamanhos-reais.png'))
             page.goto(ORIGIN + '/demonstracao/profissional')
             page.keyboard.press('Tab')
             check(page.get_by_role('link', name='Pular para o conteúdo').evaluate('(el) => el === document.activeElement'), 'atalho de teclado para conteúdo')

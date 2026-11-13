@@ -24,7 +24,7 @@ Pares de referência calculados por luminância relativa sRGB:
 
 Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4,5:1. Os painéis usam branco/cinza e tom neutro derivado para texto. Foco por teclado recebe contorno branco. Os testes verificam cores efetivas, pares de texto selecionados, indicador roxo e ausência de overflow; não equivalem a auditoria WCAG completa ou teste em aparelhos físicos.
 
-**Logotipos recebidos, aprovação técnica pendente:** os PNGs e a prancha enviados estão preservados sem alterações. A [inspeção técnica](brand/REVISAO.md) documenta transparência, margens, pixels residuais e comparação visual. A galeria em `/demonstracao/identidade` permite revisar os originais em fundos escuro/claro; cabeçalhos e menus permanecem textuais até decisão sobre os achados.
+**Cópias técnicas para comparação:** os originais permanecem intactos. O [relatório de refinamento](brand/REFINAMENTO.md) documenta ajuste de margens e remoção conservadora de componentes isolados de alfa 1, com RGB e pixels da marca preservados. `/demonstracao/identidade` compara antes/depois em fundos escuro/claro e inclui ensaios de cabeçalho/menu. Nenhum arquivo novo foi ativado nos painéis.
 
 ## Administrador — desktop, 1440 px
 
@@ -44,3 +44,12 @@ Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4
 ![Galeria de propostas originais para aprovação técnica](previews/identidade-logotipos-desktop.png)
 
 ![Revisão das propostas em viewport estreito](previews/identidade-logotipos-celular.png)
+
+
+## Refinamento autorizado — antes/depois
+
+![Originais e cópias técnicas em fundos escuros e claros, desktop](previews/identidade-refinamento-desktop.png)
+
+![Comparação responsiva em viewport de celular](previews/identidade-refinamento-celular.png)
+
+![Ensaios em tamanhos reais de cabeçalho, apresentação e menus](previews/marca-tamanhos-reais.png)

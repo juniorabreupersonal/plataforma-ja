@@ -29,3 +29,11 @@ Nova página `/demonstracao/identidade` e [exemplos visuais para revisão](VISUA
 `node --test tests/demonstracao/brand-assets.test.mjs` verifica os três PNGs contra os SHA-256 originais, dimensões e formato RGBA, mais o hash da prancha. Os valores reais do alfa foram inspecionados com Pillow nos arquivos identificados por esses hashes. O workflow repete esses quatro testes, além dos 18 testes Auth existentes. A galeria utiliza os originais sem otimização e sem filtro; a ativação nos cabeçalhos depende da aprovação técnica documentada.
 
 Validação das propostas de marca: 199 assertivas no Chromium local, incluindo carregamento nas dimensões nativas, proporção, texto alternativo, inspeção sobre fundo claro, ausência de filtro e igualdade SHA-256 dos bytes entregues pelo servidor. As capturas da galeria foram atualizadas; os cabeçalhos dos painéis continuam textuais, pendentes da decisão sobre os achados. Build aprovado e lint sem erros, mantendo apenas o aviso anterior em `/teste-supabase`.
+
+## Cópias técnicas autorizadas para comparação
+
+Ver [REFINAMENTO.md](brand/REFINAMENTO.md). O verificador `python3 tests/demonstracao/refine_brand.py` (dependências em `image-review-requirements.txt`) confere os originais e compara as cópias pixel a pixel com operações limitadas ao canal alfa/margens. `--write` gera apenas o diretório separado de revisadas e o manifesto. O CI usa somente a verificação; não reescreve os arquivos.
+
+A versão atual acrescenta comparação original/revisada sobre fundos claros e escuros, tamanhos de menu 32/48/64, cabeçalho até 320px e apresentação até 240px. Os cabeçalhos dos painéis continuam textuais. Nenhuma variante revisada está aprovada/ativada como marca operacional.
+
+Resultado do refinamento: build aprovado, 22 testes Auth/arquivos originais e verificador pixel a pixel aprovados; navegador Chromium com 221 assertivas nas larguras 1440/390/320. Há capturas lado a lado e recorte da seção de tamanhos reais em `previews/`. O recorte é somente da captura da interface; não altera os PNGs originais nem aplica um novo recorte à marca exibida.

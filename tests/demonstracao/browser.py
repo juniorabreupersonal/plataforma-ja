@@ -3,6 +3,8 @@ No Supabase connection, accounts, .env writes, traces or session exports.
 """
 from pathlib import Path
 import os
+import hashlib
+import json
 import socket
 import subprocess
 import time
@@ -121,7 +123,28 @@ def main():
             check(page.get_by_role('heading', name='Roxo Equilibrado', level=1, exact=True).is_visible(), 'exemplos visuais disponíveis para revisão')
             for color in ['#0B5ED7','#7B61C9','#1E1E1E','#080808','#E5E7EB','#FFFFFF']:
                 check(page.get_by_text(color, exact=True).is_visible(), 'amostra da paleta identificada por nome e valor')
-            check(page.get_by_text('O arquivo do logotipo original ainda precisa ser disponibilizado', exact=False).is_visible(), 'pendência do logotipo original informada sem redesenho')
+            check(page.get_by_role('heading', name='Logotipos recebidos — revisão técnica').is_visible(), 'achados de marca apresentados antes da ativação')
+            for variant, width, height in [('horizontal',1448,1086),('vertical',1122,1402),('simbolo',1254,1254)]:
+                logo = page.get_by_role('main').locator(f'img[src="/brand/propostas/ja-{variant}.png"]').filter(visible=True)
+                logo.scroll_into_view_if_needed()
+                logo.evaluate('(img) => img.decode()')
+                check(logo.evaluate('(img) => img.complete && img.naturalWidth') == width and logo.evaluate('(img) => img.naturalHeight') == height, 'PNG original carregado com dimensões nativas')
+                dimensions = logo.evaluate('(img) => ({w:img.getBoundingClientRect().width,h:img.getBoundingClientRect().height})')
+                check(abs(dimensions['w']/dimensions['h'] - width/height) < 0.01, 'proporção original preservada sem deformação')
+                check(bool(logo.get_attribute('alt')), 'proposta de marca tem texto alternativo')
+                article = logo.locator('xpath=ancestor::article').first
+                article.locator('summary').click()
+                check(article.locator('details img').is_visible(), 'inspeção sobre fundo claro disponível sem alterar PNG')
+                check(article.locator('details img').evaluate('(img) => getComputedStyle(img).filter') == 'none', 'nenhum filtro de recoloração é aplicado')
+                article.locator('summary').click()
+                manifest = json.loads((ROOT / 'tests/demonstracao/brand/manifest.json').read_text())
+                expected = next(item for item in manifest['files'] if item['variant'] == variant)
+                response = context.request.get(ORIGIN + expected['path'])
+                check(response.status == 200 and 'image/png' in response.headers.get('content-type',''), 'servidor entrega PNG original no endereço indicado')
+                check(hashlib.sha256(response.body()).hexdigest() == expected['sha256'], 'bytes servidos são idênticos ao PNG enviado')
+            if os.environ.get('DEMO_SCREENSHOTS_DIR'):
+                for summary in page.get_by_role('main').locator('summary').all():
+                    summary.click()  # Capture both original compositing backgrounds for review.
             for width in [1440,390,320]:
                 page.set_viewport_size({'width':width,'height':900})
                 check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), f'guia visual {width}px: sem overflow')

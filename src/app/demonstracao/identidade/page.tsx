@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BrandProposals } from "@/components/demonstracao/brand-proposals";
 import Link from "next/link";
 import { DemoArrow, DemoBadge, DemoFrame, MetricCard } from "@/components/demonstracao/dashboard";
 import { brandPalette, demoClasses as styles } from "@/components/demonstracao/tokens";
@@ -31,10 +32,7 @@ export default function Identidade() {
           </div>
           <dl aria-label="Indicador fictício de exemplo" className="mt-6 grid max-w-sm gap-4"><MetricCard label="Jornadas de exemplo" value="02" detail="Indicador ilustrativo, sem consulta a cadastros." /></dl>
         </section>
-        <section aria-labelledby="marca-identidade" className={`rounded-2xl border p-6 ${styles.surface}`}>
-          <h2 id="marca-identidade" className="text-xl font-semibold">Aplicação da marca</h2>
-          <p className={`mt-3 max-w-3xl text-sm leading-7 ${styles.secondary}`}>O arquivo do logotipo original ainda precisa ser disponibilizado para aplicação fiel. Nesta prévia, usamos somente a identificação textual JÚNIOR ABREU PERFORMANCE, sem redesenhar ou recolorir o logotipo.</p>
-        </section>
+        <BrandProposals />
       </main>
     </DemoFrame>
   );

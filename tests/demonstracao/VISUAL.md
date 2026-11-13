@@ -24,7 +24,7 @@ Pares de referência calculados por luminância relativa sRGB:
 
 Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4,5:1. Os painéis usam branco/cinza e tom neutro derivado para texto. Foco por teclado recebe contorno branco. Os testes verificam cores efetivas, pares de texto selecionados, indicador roxo e ausência de overflow; não equivalem a auditoria WCAG completa ou teste em aparelhos físicos.
 
-**Logotipo original pendente:** não existe arquivo da marca gráfica original no repositório. Não foi redesenhado ou recolorido nenhum logotipo. O monograma provisório da demonstração anterior foi removido; a identificação textual JÚNIOR ABREU PERFORMANCE permanece até o envio do asset original.
+**Logotipos recebidos, aprovação técnica pendente:** os PNGs e a prancha enviados estão preservados sem alterações. A [inspeção técnica](brand/REVISAO.md) documenta transparência, margens, pixels residuais e comparação visual. A galeria em `/demonstracao/identidade` permite revisar os originais em fundos escuro/claro; cabeçalhos e menus permanecem textuais até decisão sobre os achados.
 
 ## Administrador — desktop, 1440 px
 
@@ -37,3 +37,10 @@ Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4
 ## Aluno — viewport de celular, 390 px
 
 ![Painel de aluno fictício em layout estreito, com navegação e cartões responsivos](previews/aluno-celular.png)
+
+
+## Logotipos — galeria técnica, sem ativação nos painéis
+
+![Galeria de propostas originais para aprovação técnica](previews/identidade-logotipos-desktop.png)
+
+![Revisão das propostas em viewport estreito](previews/identidade-logotipos-celular.png)

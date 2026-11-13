@@ -20,6 +20,12 @@ Validação inicial: build aprovado, 18 testes existentes de autenticação apro
 
 ## Paleta Roxo Equilibrado
 
-A atualização visual usa a fonte única `tokens.ts` e classes prefixadas em `theme.css`, devido ao loader CSS atual. O CSS não altera as páginas fora de `.ja-demo`. O logotipo gráfico original não foi encontrado: permanece a identificação textual, sem redesenho ou recoloração de marca original.
+A atualização visual usa a fonte única `tokens.ts` e classes prefixadas em `theme.css`, devido ao loader CSS atual. O CSS não altera as páginas fora de `.ja-demo`. Os logotipos recebidos estão em revisão técnica: ver `brand/REVISAO.md`. A identificação textual permanece nos painéis até decisão sobre margens, contornos e fidelidade. Nenhuma marca foi redesenhada/recolorida.
 
 Nova página `/demonstracao/identidade` e [exemplos visuais para revisão](VISUAL.md), com capturas estáticas fictícias versionadas. O workflow continua sem upload de capturas/traces/sessões. A versão atual do navegador executa 178 assertivas, acrescentando paleta, ação azul, contrastes selecionados de texto (mínimo 4,5:1), contraste não textual do detalhe roxo (mínimo 3:1) e revisão da página de identidade em 1440/390/320 px. Isso não autoriza atendimento, publicação ou aprovação definitiva dos painéis.
+
+## Arquivos de marca recebidos
+
+`node --test tests/demonstracao/brand-assets.test.mjs` verifica os três PNGs contra os SHA-256 originais, dimensões e formato RGBA, mais o hash da prancha. Os valores reais do alfa foram inspecionados com Pillow nos arquivos identificados por esses hashes. O workflow repete esses quatro testes, além dos 18 testes Auth existentes. A galeria utiliza os originais sem otimização e sem filtro; a ativação nos cabeçalhos depende da aprovação técnica documentada.
+
+Validação das propostas de marca: 199 assertivas no Chromium local, incluindo carregamento nas dimensões nativas, proporção, texto alternativo, inspeção sobre fundo claro, ausência de filtro e igualdade SHA-256 dos bytes entregues pelo servidor. As capturas da galeria foram atualizadas; os cabeçalhos dos painéis continuam textuais, pendentes da decisão sobre os achados. Build aprovado e lint sem erros, mantendo apenas o aviso anterior em `/teste-supabase`.

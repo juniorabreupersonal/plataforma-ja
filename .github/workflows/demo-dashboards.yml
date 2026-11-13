@@ -2,7 +2,7 @@ name: Demo dashboards - browser and access boundaries
 on:
   pull_request:
     branches: [main]
-    paths: ['src/**', 'tests/**', 'package*.json', 'next.config.*', '.github/workflows/demo-dashboards.yml']
+    paths: ['src/**', 'public/brand/**', 'tests/**', 'package*.json', 'next.config.*', '.github/workflows/demo-dashboards.yml']
 permissions:
   contents: read
 jobs:
@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-      - run: node --test tests/auth.test.mjs
+      - run: node --test tests/auth.test.mjs tests/demonstracao/brand-assets.test.mjs
       - run: npm run lint
       - run: npm run build
       - name: Install browser test tools

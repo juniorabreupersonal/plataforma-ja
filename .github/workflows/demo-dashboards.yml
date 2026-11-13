@@ -1,0 +1,36 @@
+name: Demo dashboards - browser and access boundaries
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'public/brand/**', 'tests/**', 'package*.json', 'next.config.*', '.github/workflows/demo-dashboards.yml']
+permissions:
+  contents: read
+jobs:
+  dashboards:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      APP_URL: http://127.0.0.1:3210
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_demo_not_a_real_key
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: node --test tests/auth.test.mjs tests/demonstracao/brand-assets.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Install browser test tools
+        run: |
+          python3 -m venv /tmp/ja-demo-browser
+          /tmp/ja-demo-browser/bin/pip install playwright==1.64.1 -r tests/demonstracao/image-review-requirements.txt
+          /tmp/ja-demo-browser/bin/python -m playwright install --with-deps chromium
+      - name: Verify lossless technical copies
+        run: /tmp/ja-demo-browser/bin/python tests/demonstracao/refine_brand.py
+      - name: Real Chromium navigation and access denial
+        run: /tmp/ja-demo-browser/bin/python tests/demonstracao/browser.py

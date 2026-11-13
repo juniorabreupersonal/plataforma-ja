@@ -1,0 +1,93 @@
+{
+  "policy": {
+    "alphaRemoved": 1,
+    "minimumDistancePx": 24,
+    "connectivity": 8,
+    "safeAreaFraction": 0.05,
+    "minimumSafeAreaPx": 12
+  },
+  "variants": [
+    {
+      "variant": "horizontal",
+      "path": "/brand/revisadas/ja-horizontal-tecnica.png",
+      "sourceSHA256": "f340bd7754d722326b46d287388bb52e076a63fdfb13038485b1da21c5cffb4b",
+      "sha256": "2fef30acce42481c8fb5157d915dc53ed51620664125d26b78b793257123e658",
+      "contentBBox": [
+        89,
+        417,
+        1370,
+        701
+      ],
+      "sourceWindow": [
+        24,
+        352,
+        1435,
+        766
+      ],
+      "safeAreaPx": 65,
+      "width": 1411,
+      "height": 414,
+      "removedPixels": 3035,
+      "removedComponents": 878,
+      "removalMaskSHA256": "6fde254bc61ce32366e249111c5a9b4c81dbe683c3d51d94dd41d041ac72daea",
+      "rgbChanged": 0,
+      "retainedAlphaChanged": 0,
+      "resampled": false
+    },
+    {
+      "variant": "vertical",
+      "path": "/brand/revisadas/ja-vertical-tecnica.png",
+      "sourceSHA256": "76efa2402f73da319100d2067c074936c809e2b070a106c3db2a7fd1bf117d95",
+      "sha256": "1674a7beb73659698c4f951188b09fd5aad969b784f4ccfa2d004f2eee5f6b6a",
+      "contentBBox": [
+        49,
+        385,
+        1076,
+        1046
+      ],
+      "sourceWindow": [
+        -3,
+        333,
+        1128,
+        1098
+      ],
+      "safeAreaPx": 52,
+      "width": 1131,
+      "height": 765,
+      "removedPixels": 2682,
+      "removedComponents": 764,
+      "removalMaskSHA256": "13020021ea376f4e6174d0cb00de8e1dae5e2f7b27b93296967cb5f7c40d3bd1",
+      "rgbChanged": 0,
+      "retainedAlphaChanged": 0,
+      "resampled": false
+    },
+    {
+      "variant": "simbolo",
+      "path": "/brand/revisadas/ja-simbolo-tecnica.png",
+      "sourceSHA256": "4d44756d2ad00ddb2b988d50a4f550b219ff170980fa9a6521cf9f29c3abddf6",
+      "sha256": "e370ef5b201de07ed1f32867e7368f2f1ca895d901f2b7681c9ccd134af1ef43",
+      "contentBBox": [
+        49,
+        417,
+        1200,
+        886
+      ],
+      "sourceWindow": [
+        -9,
+        359,
+        1258,
+        944
+      ],
+      "safeAreaPx": 58,
+      "width": 1267,
+      "height": 585,
+      "removedPixels": 4637,
+      "removedComponents": 968,
+      "removalMaskSHA256": "409905025fb9abe13f0e96f372738c1705dd08aa0ae76208c4f4919f39735240",
+      "rgbChanged": 0,
+      "retainedAlphaChanged": 0,
+      "resampled": false
+    }
+  ],
+  "status": "comparison-only-not-approved-for-panels"
+}

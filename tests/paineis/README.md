@@ -45,3 +45,5 @@ Entrega pequena: listas de até 100 vínculos/organizações recentes, identific
 Não pronta para produção: migrações não implantadas; dependências ainda em revisão; bootstrap real e MFA operacional pendentes; plano de backup/restauração e autorização específica necessários antes do projeto principal. Somente dados sintéticos em homologação. Safari/Firefox, aparelhos físicos e auditoria completa WCAG não são demonstrados por Chromium headless. Auditoria mínima cobre decisões/escritas da fundação e leituras administrativas; monitoração operacional de tentativas negadas e limitação de requisições requerem definição antes de produção.
 
 Resultados da execução serão registrados no PR, distinguindo verificações locais simuladas e integração real descartável.
+
+Proxy estendido aos painéis e `/seguranca`, preservando renovação de sessão, `Cache-Control: private, no-store` e `Referrer-Policy: no-referrer`. O ensaio integrado também repete uma Server Action real com sessão profissional e com origem externa, verificando ausência de escrita.

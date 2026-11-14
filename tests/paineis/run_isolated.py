@@ -164,10 +164,22 @@ def exercise(stack, directory):
             admin.get_by_role('heading',name='Administração da Plataforma JA').wait_for()
             check(admin.get_by_role('link',name='Administrador',exact=True).count()==1, 'browser: MFA válido libera navegação exclusiva do proprietário')
             admin.get_by_label('Nome da organização').fill('Synthetic browser organization')
-            admin.get_by_role('button',name='Criar organização').click()
+            with admin.expect_request(lambda req: req.method == 'POST' and req.url == b.APP+'/administrador') as action_capture:
+                admin.get_by_role('button',name='Criar organização').click()
             admin.get_by_role('status').filter(has_text='Organização criada.').wait_for()
-            admin.reload()
+            response = admin.reload()
+            check('no-store' in response.headers.get('cache-control','') and response.headers.get('referrer-policy') == 'no-referrer', 'browser: painel retorna cabeçalhos privados e sem referência externa')
             check('Synthetic browser organization' in admin.get_by_role('main').inner_text(), 'browser: ação administrativa persiste organização com auditoria')
+            action_request = action_capture.value
+            headers = {key:value for key,value in action_request.all_headers().items() if key in ('content-type','next-action')}
+            check('next-action' in headers, 'requisição real identifica Server Action testada')
+            headers['origin'] = b.APP
+            before = stack.sql('select count(*) from public.organizations;').stdout.strip()
+            denied = pro.context.request.post(b.APP+'/administrador', data=action_request.post_data_buffer, headers=headers)
+            check(denied.status >= 400 and stack.sql('select count(*) from public.organizations;').stdout.strip() == before, 'HTTP: profissional não executa Server Action administrativa capturada por acesso direto')
+            headers['origin'] = 'https://external.example.invalid'
+            denied = admin.context.request.post(b.APP+'/administrador', data=action_request.post_data_buffer, headers=headers)
+            check(denied.status >= 400 and stack.sql('select count(*) from public.organizations;').stdout.strip() == before, 'HTTP: origem externa não executa ação mesmo com sessão proprietária')
             b.logout(admin)
             admin.goto(b.APP+'/administrador')
             admin.wait_for_url(b.APP+'/login')

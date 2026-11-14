@@ -127,7 +127,7 @@ def exercise(stack, directory):
             basic_page.context.add_cookies([{'name':'role','value':'owner','url':b.APP},{'name':'ja-role','value':'admin','url':b.APP}])
             check(basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link').count() == 0, 'browser: perfil básico não vê painéis')
             for path in ['/administrador?role=owner','/profissional?role=professional','/aluno?role=student','/seguranca/mfa']:
-                basic_page.goto(b.APP+path)
+                basic_page.goto(b.APP+path, wait_until='networkidle')
                 check(basic_page.get_by_role('heading',name='Administração da Plataforma JA').count() == 0 and basic_page.get_by_role('button',name='Criar organização').count() == 0, 'browser: URL direta e query manipulada não liberam administração')
             STAGE = 'convite presente na conta'
             basic_page.goto(b.APP+'/conta', wait_until='networkidle')
@@ -136,7 +136,9 @@ def exercise(stack, directory):
             with basic_page.expect_request(lambda req: req.method == 'POST' and req.url == b.APP+'/conta') as invitation_capture:
                 basic_page.get_by_role('button',name='Aceitar convite').click()
             basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).wait_for()
-            basic_page.reload()
+            basic_page.reload(wait_until='networkidle')
+            check(context(stack, users['basic'])['student'], 'HTTP: aceite foi persistido no banco')
+            basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).wait_for()
             check(basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).count()==1, 'browser: aceite legítimo habilita apenas função previamente autorizada')
             STAGE = 'POST de aceite com convite pendente de terceiro'
             invitation_request = invitation_capture.value
@@ -149,21 +151,21 @@ def exercise(stack, directory):
             check('Convite indispon' in denied.text() and not context(stack, users['basic'])['professional'] and stack.sql(f"select status from public.organization_memberships where id='{foreign_invite}';").stdout.strip() == 'invited', 'HTTP: ID adulterado não aceita convite pendente de terceiro nem amplia função')
             STAGE = 'painel profissional'
             pro = page_for('pro-a')
-            pro.goto(b.APP+'/profissional')
+            pro.goto(b.APP+'/profissional', wait_until='networkidle')
             pro.get_by_role('heading',name='Meu painel profissional').wait_for()
             check(care[0] in pro.get_by_role('main').inner_text() and care[1] not in pro.get_by_role('main').inner_text(), 'browser: profissional vê somente seu vínculo')
-            pro.goto(b.APP+'/administrador')
+            pro.goto(b.APP+'/administrador', wait_until='networkidle')
             check(pro.get_by_role('button',name='Criar organização').count()==0, 'browser: profissional não acessa ação administrativa')
             STAGE = 'painel aluno'
             student = page_for('student')
-            student.goto(b.APP+'/aluno')
+            student.goto(b.APP+'/aluno', wait_until='networkidle')
             student.get_by_role('heading',name='Meu painel de aluno').wait_for()
             check(all(cid in student.get_by_role('main').inner_text() for cid in care), 'browser: aluno vê seus dois vínculos autorizados')
             STAGE = 'login proprietário AAL1'
             admin = page_for('owner')
             check(admin.get_by_role('link',name='Administrador',exact=True).count()==0, 'browser: proprietário AAL1 não vê menu administrativo')
             STAGE = 'proteção administrativa por MFA'
-            admin.goto(b.APP+'/administrador')
+            admin.goto(b.APP+'/administrador', wait_until='networkidle')
             admin.wait_for_url(b.APP+'/seguranca/mfa')
             STAGE = 'rejeição MFA inválido'
             admin.get_by_label('Código do autenticador').fill(str((int(totp(secret))+1)%1000000).zfill(6))
@@ -185,7 +187,7 @@ def exercise(stack, directory):
             with admin.expect_request(lambda req: req.method == 'POST' and req.url == b.APP+'/administrador') as action_capture:
                 admin.get_by_role('button',name='Criar organização').click()
             admin.get_by_role('status').filter(has_text='Organização criada.').wait_for()
-            response = admin.reload()
+            response = admin.reload(wait_until='networkidle')
             check('no-store' in response.headers.get('cache-control','') and response.headers.get('referrer-policy') == 'no-referrer', 'browser: painel retorna cabeçalhos privados e sem referência externa')
             check('Synthetic browser organization' in admin.get_by_role('main').inner_text(), 'browser: ação administrativa persiste organização com auditoria')
             STAGE = 'POST administrativo direto por profissional'
@@ -203,14 +205,14 @@ def exercise(stack, directory):
             STAGE = 'logout proprietário'
             b.logout(admin)
             STAGE = 'proteção administrativa por MFA'
-            admin.goto(b.APP+'/administrador')
+            admin.goto(b.APP+'/administrador', wait_until='networkidle')
             admin.wait_for_url(b.APP+'/login')
             check(admin.get_by_role('button',name='Criar organização').count()==0, 'browser: logout bloqueia acesso direto ao painel')
             # Requisições independentes com o mesmo JWT refletem alterações no banco.
             STAGE = 'revogação e suspensão'
             stack.rpc('ja_end_membership', users['pro-a'], {'p_id':memberships[('pro-a',orgs[0])],'p_reason':'Synthetic revocation'})
             check(not context(stack, users['pro-a'])['professional'], 'JWT antigo não mantém função após encerramento de vínculo')
-            pro.goto(b.APP+'/profissional')
+            pro.goto(b.APP+'/profissional', wait_until='networkidle')
             check(pro.get_by_role('heading',name='Meu painel profissional').count()==0, 'browser: vínculo encerrado bloqueia próxima requisição')
             stack.sql(f"update public.organizations set status='suspended' where id='{orgs[0]}'; update public.organizations set status='suspended' where id='{orgs[1]}';")
             check(not context(stack, users['student'])['student'], 'organizações suspensas retiram navegação do aluno')

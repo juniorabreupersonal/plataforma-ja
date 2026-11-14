@@ -47,3 +47,9 @@ Não pronta para produção: migrações não implantadas; dependências ainda e
 Resultados da execução serão registrados no PR, distinguindo verificações locais simuladas e integração real descartável.
 
 Proxy estendido aos painéis e `/seguranca`, preservando renovação de sessão, `Cache-Control: private, no-store` e `Referrer-Policy: no-referrer`. O ensaio integrado também repete uma Server Action real com sessão profissional e com origem externa, verificando ausência de escrita.
+
+## Evidência local e ajustes do ensaio
+
+No código da entrega: 34 testes Node, 26 verificações Python da fundação/executores, build de produção, verificação pixel a pixel e 199 assertivas Chromium públicas aprovados. Lint sem erros, com o aviso preexistente de import não usado em `/teste-supabase`.
+
+As duas migrações chegaram à fase de navegador no stack real descartável. A primeira tentativa sofreu falha de inicialização da CLI; a repetição iniciou o stack. Ensaios seguintes localizaram problemas na sincronização do teste de aceite: o teste atual captura a ação real e repete um POST com um convite pendente de terceiro, confirma persistência separadamente por HTTP e aguarda a renderização dinâmica antes de verificar menus/negativas. As falhas anteriores não são classificadas como validação completa dos painéis. O resultado integrado definitivo deve constar no PR e no workflow do commit final.

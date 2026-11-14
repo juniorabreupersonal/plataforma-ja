@@ -1,4 +1,5 @@
 
+import { publicSupabaseConfig } from "@/lib/environment/policy.mjs";
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createSupabaseClient() {
@@ -12,5 +13,6 @@ export function createSupabaseClient() {
     );
   }
 
-  return createBrowserClient(supabaseUrl, supabaseKey);
+  const approved = publicSupabaseConfig(supabaseUrl, supabaseKey);
+  return createBrowserClient(approved.url, approved.key);
 }

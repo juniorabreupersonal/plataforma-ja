@@ -62,11 +62,13 @@ class Application:
         for name in ['src', 'public']:
             shutil.copytree(ROOT / name, self.path / name,
                             ignore=shutil.ignore_patterns('.env*', 'node_modules', '.next'))
+        (self.path / 'scripts/homologation').mkdir(parents=True)
+        shutil.copyfile(ROOT / 'scripts/homologation/preflight.mjs', self.path / 'scripts/homologation/preflight.mjs')
         self.env = {k: v for k, v in os.environ.items()
-                    if not k.startswith(('SUPABASE_', 'NEXT_PUBLIC_SUPABASE_'))
-                    and k not in ('DATABASE_URL', 'APP_URL', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
+                    if not k.startswith(('SUPABASE_', 'NEXT_PUBLIC_SUPABASE_', 'VERCEL', 'STAGING_'))
+                    and k not in ('DATABASE_URL', 'APP_URL', 'APP_ENV', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
                                   'http_proxy', 'https_proxy', 'all_proxy')}
-        self.env.update(APP_URL=APP, NEXT_PUBLIC_SUPABASE_URL=API,
+        self.env.update(APP_ENV='local', APP_URL=APP, NEXT_PUBLIC_SUPABASE_URL=API,
                         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=key,
                         NEXT_TELEMETRY_DISABLED='1', NODE_ENV='production')
 

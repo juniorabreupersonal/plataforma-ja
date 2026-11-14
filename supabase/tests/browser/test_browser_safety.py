@@ -12,13 +12,16 @@ import run_browser as runner
 class BrowserSafety(unittest.TestCase):
     def test_copy_does_not_contain_environment_files(self):
         with tempfile.TemporaryDirectory() as directory:
-            with patch.dict(runner.os.environ, {'APP_URL': 'https://external.test', 'DATABASE_URL': 'synthetic', 'NEXT_PUBLIC_SUPABASE_URL': 'https://external.test'}):
+            with patch.dict(runner.os.environ, {'APP_URL': 'https://external.test', 'DATABASE_URL': 'synthetic', 'NEXT_PUBLIC_SUPABASE_URL': 'https://external.test', 'APP_ENV':'staging', 'VERCEL':'1', 'STAGING_GATE_SECRET':'not-real'}):
                 application = runner.Application(directory, 'synthetic-local-key')
             self.assertEqual(list(Path(directory).rglob('.env*')), [])
             self.assertEqual(application.env['APP_URL'], runner.APP)
             self.assertEqual(application.env['NEXT_PUBLIC_SUPABASE_URL'], runner.API)
             self.assertEqual(application.env['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'], 'synthetic-local-key')
             self.assertNotIn('DATABASE_URL', application.env)
+            self.assertEqual(application.env['APP_ENV'], 'local')
+            self.assertNotIn('VERCEL', application.env)
+            self.assertNotIn('STAGING_GATE_SECRET', application.env)
             self.assertFalse((Path(directory) / 'supabase').exists())
 
     def test_browser_network_guard(self):

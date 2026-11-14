@@ -169,6 +169,7 @@ test('SSR usa somente chave pública e cookies HttpOnly, Secure em produção e 
   const writes = [];
   const { authClient } = load('src/lib/auth/server.ts', {
     'server-only': {},
+    '@/lib/environment/server': { serverEnvironment: () => ({ mode: 'local', url: process.env.NEXT_PUBLIC_SUPABASE_URL, key: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }) },
     'next/headers': { cookies: async () => ({ getAll: () => [], set: (...args) => writes.push(args) }) },
     '@supabase/ssr': { createServerClient: (url, key, options) => { settings = { url, key, options }; return {}; } },
   });
@@ -190,6 +191,7 @@ test('Proxy propaga renovação para requisição e resposta sem cache compartil
   let verified = false;
   const request = { cookies: { getAll: () => [], set: (...args) => requestWrites.push(args) } };
   const { proxy } = load('src/proxy.ts', {
+    '@/lib/environment/server': { serverEnvironment: () => ({ mode: 'local', url: process.env.NEXT_PUBLIC_SUPABASE_URL, key: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }) },
     'next/server': { NextResponse: { next: () => ({ headers: new Headers(), cookies: { set: (...args) => responseWrites.push(args) } }) } },
     '@supabase/ssr': { createServerClient: (url, key, options) => ({ auth: { getUser: async () => {
       verified = true;

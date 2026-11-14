@@ -81,6 +81,6 @@ test('aceite valida identidade ativa e UUID, sem aceitar papel enviado pelo nave
   assert.deepEqual(calls,[['ja_accept_membership',{p_id:'00000000-0000-4000-8000-000000000001'}]]);
 });
 test('Proxy cobre os três painéis e segurança para renovar sessão e impedir cache compartilhado', () => {
-  const proxy = load('src/proxy.ts', {'@supabase/ssr':{},'next/server':{}});
-  for (const path of ['/administrador/:path*','/profissional/:path*','/aluno/:path*','/seguranca/:path*']) assert.ok(proxy.config.matcher.includes(path));
+  const proxy = load('src/proxy.ts', {'@supabase/ssr':{},'next/server':{},'@/lib/environment/server':{}});
+  assert.ok(proxy.config.matcher.includes('/:path*')); // Includes panels, APIs, callbacks and assets for the staging gate.
 });

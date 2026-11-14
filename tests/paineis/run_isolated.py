@@ -149,6 +149,17 @@ def exercise(stack, directory):
             tampered = body.replace(own_invite.encode(), foreign_invite.encode())
             denied = basic_page.context.request.post(b.APP+'/conta', data=tampered, headers=headers)
             check('Convite indispon' in denied.text() and not context(stack, users['basic'])['professional'] and stack.sql(f"select status from public.organization_memberships where id='{foreign_invite}';").stdout.strip() == 'invited', 'HTTP: ID adulterado não aceita convite pendente de terceiro nem amplia função')
+            STAGE = 'matrícula inicial TOTP sem concessão de papéis'
+            basic_page.goto(b.APP+'/conta/seguranca', wait_until='networkidle')
+            basic_page.get_by_role('button',name='Iniciar configuração TOTP',exact=True).click()
+            basic_page.get_by_label('Chave de configuração TOTP').wait_for()
+            enrollment_secret = basic_page.get_by_label('Chave de configuração TOTP').input_value()
+            basic_page.get_by_label('Código do autenticador',exact=True).fill(totp(enrollment_secret))
+            basic_page.get_by_role('button',name='Confirmar autenticador',exact=True).click()
+            basic_page.get_by_role('status').filter(has_text='Autenticador confirmado.').wait_for()
+            check(not context(stack, users['basic'])['owner_candidate'], 'browser: matrícula e confirmação TOTP não concedem proprietário')
+            basic_page.goto(b.APP+'/conta', wait_until='networkidle')
+            check(basic_page.get_by_role('link',name='Administrador',exact=True).count()==0, 'browser: usuário com novo fator MFA não ganha administração')
             STAGE = 'painel profissional'
             pro = page_for('pro-a')
             pro.goto(b.APP+'/profissional', wait_until='networkidle')
@@ -164,6 +175,8 @@ def exercise(stack, directory):
             STAGE = 'login proprietário AAL1'
             admin = page_for('owner')
             check(admin.get_by_role('link',name='Administrador',exact=True).count()==0, 'browser: proprietário AAL1 não vê menu administrativo')
+            admin.goto(b.APP+'/conta/seguranca', wait_until='networkidle')
+            check(admin.get_by_role('button',name='Iniciar configuração TOTP',exact=True).count()==0, 'browser: proprietário AAL1 não substitui fator pelo fluxo inicial')
             STAGE = 'proteção administrativa por MFA'
             admin.goto(b.APP+'/administrador', wait_until='networkidle')
             admin.wait_for_url(b.APP+'/seguranca/mfa')

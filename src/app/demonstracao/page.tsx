@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DemoBrand } from "@/components/demonstracao/brand";
 import { DemoArrow, DemoFrame } from "@/components/demonstracao/dashboard";
 import { demoClasses as styles } from "@/components/demonstracao/tokens";
 import { profiles } from "@/components/demonstracao/data";
@@ -7,6 +8,7 @@ export default function Demonstracao() {
   return (
     <DemoFrame>
       <main id="conteudo-demonstracao" className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
+        <div className="mb-8"><DemoBrand variant="vertical" width={240} /></div>
         <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${styles.secondary}`}>Conheça a Plataforma JA</p>
         <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">Três perspectivas.<br /><span className={styles.muted}>Uma jornada de evolução.</span></h1>
         <p className={`mt-6 max-w-2xl text-base leading-8 ${styles.secondary}`}>Explore a base visual dos painéis de administrador, profissional e aluno. Esta prévia usa somente personagens e situações fictícias; os recursos de atendimento ainda não estão disponíveis.</p>

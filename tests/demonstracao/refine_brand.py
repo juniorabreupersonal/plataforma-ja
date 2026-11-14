@@ -79,7 +79,7 @@ def main(write=False):
                 'sourceSHA256':entry['sha256'],'sha256':sha(dest.read_bytes()),**info}
         results.append(record)
         print(f"PASS {entry['variant']}: RGB intacto; {info['removedPixels']} pixels alfa=1 isolados; {info['width']}x{info['height']}; segurança {info['safeAreaPx']}px")
-    report={'policy':POLICY,'variants':results,'status':'comparison-only-not-approved-for-panels'}
+    report={'policy':POLICY,'variants':results,'status':'experimental-demo-use-authorized-final-visual-review-pending'}
     if write:
         COPY_MANIFEST.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     else:

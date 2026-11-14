@@ -30,7 +30,7 @@ export function BrandProposals() {
     <section aria-labelledby="marca-identidade" className={`rounded-2xl border p-6 ${styles.surface}`}>
       <h2 id="marca-identidade" className="text-xl font-semibold">Logotipos — comparação técnica antes e depois</h2>
       <p className={`mt-3 max-w-3xl text-sm leading-7 ${styles.secondary}`}>Os originais continuam intactos. As cópias ajustam somente margens e resíduos isolados de transparência mínima, sem redesenhar, recolorir, esticar ou alterar o lettering. As sombras e os demais detalhes foram preservados.</p>
-      <p className={`mt-3 max-w-3xl text-sm leading-7 ${styles.muted}`}>Uso exclusivo para revisão. Nenhuma cópia foi ativada nos painéis, menus ou telas de acesso. Halos junto à marca, serrilhado e diferenças de acabamento frente à prancha permanecem: não foram corrigidos automaticamente.</p>
+      <p className={`mt-3 max-w-3xl text-sm leading-7 ${styles.muted}`}>Integração experimental autorizada somente nas demonstrações. As telas reais de acesso permanecem inalteradas. Halos junto à marca, serrilhado e diferenças de acabamento frente à prancha permanecem: não foram corrigidos automaticamente.</p>
       <div className="mt-6 space-y-8">
         {proposals.map((logo) => {
           const revised = copies.variants.find((entry) => entry.variant === logo.variant)!;
@@ -48,22 +48,22 @@ export function BrandProposals() {
       </div>
       <section aria-labelledby="tamanhos-marca" className="mt-10">
         <h3 id="tamanhos-marca" className="text-xl font-semibold">Prévias em tamanhos de interface</h3>
-        <p className={`mt-3 text-sm leading-7 ${styles.secondary}`}>Encaixes de comparação, sem trocar a marca do cabeçalho desta página. As dimensões indicam pixels CSS; em telas estreitas, a apresentação se reduz proporcionalmente.</p>
+        <p className={`mt-3 text-sm leading-7 ${styles.secondary}`}>Encaixes de comparação das cópias usadas experimentalmente nas demonstrações. As dimensões indicam pixels CSS; em telas estreitas, a apresentação se reduz proporcionalmente.</p>
         <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
           {copies.variants.filter((entry) => entry.variant !== "simbolo").map((asset) => <figure key={asset.variant} className={`min-w-0 rounded-xl border p-4 ${styles.border}`}>
             <figcaption className={`mb-3 text-sm ${styles.secondary}`}>{asset.variant === "horizontal" ? "Ensaio de cabeçalho · até 320 px de largura" : "Ensaio de apresentação · até 240 px de largura"}</figcaption>
-            <LogoImage asset={asset} alt={`Cópia técnica ${asset.variant} em tamanho de interface, não ativada`} width={asset.variant === "horizontal" ? 320 : 240} />
+            <LogoImage asset={asset} alt={`Cópia técnica ${asset.variant} em tamanho de interface, uso experimental`} width={asset.variant === "horizontal" ? 320 : 240} />
           </figure>)}
         </div>
         <div className="mt-5 flex flex-wrap gap-5">
-          {[32, 48, 64].map((size) => <figure key={size} className={`rounded-xl border p-4 ${styles.border}`}>
+          {[64, 96].map((size) => <figure key={size} className={`rounded-xl border p-4 ${styles.border}`}>
             <figcaption className={`mb-3 text-xs ${styles.secondary}`}>Menu · caixa {size} × {size} px</figcaption>
             <div className="flex items-center justify-center" style={{ width: size, height: size }}>
               <LogoImage asset={copies.variants.find((entry) => entry.variant === "simbolo")!} alt={`Símbolo JA revisado na caixa de menu de ${size} pixels, sem deformação`} width={size} />
             </div>
           </figure>)}
         </div>
-        <p className={`mt-4 text-sm leading-7 ${styles.muted}`}>O símbolo é largo e detalhado; a leitura em 32 px continua limitada. Torná-lo um ícone simplificado ou mudar o lettering exigiria uma nova decisão de desenho da marca.</p>
+        <p className={`mt-4 text-sm leading-7 ${styles.muted}`}>O símbolo é largo e detalhado; não é utilizado em caixas de 32 px; o cabeçalho compacto usa 96 px de largura. Torná-lo um ícone simplificado ou mudar o lettering exigiria uma nova decisão de desenho da marca.</p>
       </section>
     </section>
   );

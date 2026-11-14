@@ -94,12 +94,24 @@ def main():
                 page.set_viewport_size({'width': width, 'height': height})
                 for profile, label, section in samples:
                     page.goto(ORIGIN + '/demonstracao', wait_until='networkidle')
+                    vertical = page.get_by_role('main').locator('img')
+                    check(vertical.get_attribute('src') == '/brand/revisadas/ja-vertical-tecnica.png', 'apresentação usa a versão vertical existente')
+                    if profile == 'administrador' and width in (1440, 390) and os.environ.get('DEMO_SCREENSHOTS_DIR'):
+                        dest = Path(os.environ['DEMO_SCREENSHOTS_DIR'])
+                        dest.mkdir(parents=True, exist_ok=True)
+                        page.screenshot(path=str(dest / f'apresentacao-{width}.png'), full_page=True)
                     page.get_by_role('link').filter(has=page.get_by_role('heading', name=label, exact=True)).click()
                     page.wait_for_url('**/demonstracao/' + profile)
                     check(page.get_by_role('note', name='Aviso de demonstração').is_visible(), f'{profile} {width}px: aviso fictício visível')
                     check(page.get_by_role('main').get_by_role('heading', level=1).count() == 1, f'{profile}: título principal único')
                     palette_checks(page)
-                    check(page.locator('header img').count() == 0, 'cópias técnicas não foram ativadas no cabeçalho')
+                    logo = page.locator('header img').filter(visible=True)
+                    check(logo.count() == 1, f'{profile}: uma versão da marca visível no cabeçalho')
+                    variant = 'horizontal' if width >= 640 else 'simbolo'
+                    check(logo.get_attribute('src') == f'/brand/revisadas/ja-{variant}-tecnica.png', f'{profile}: variante responsiva correta')
+                    check(logo.evaluate('(img) => img.width') == (320 if width >= 640 else 96), f'{profile}: marca em tamanho legível')
+                    check(logo.evaluate('(img) => img.complete && img.naturalWidth > 0 && Math.abs(img.width / img.height - img.naturalWidth / img.naturalHeight) < 0.03'), f'{profile}: PNG carregado sem deformação')
+                    check(bool(logo.get_attribute('alt')), f'{profile}: alternativa textual da marca')
                     nav = page.get_by_role('navigation', name='Escolher painel de demonstração')
                     check(nav.get_by_role('link', name=label, exact=True).get_attribute('aria-current') == 'page', f'{profile}: perfil de exemplo identificado')
                     section_nav = page.get_by_role('navigation', name='Navegação do painel ' + label)
@@ -153,11 +165,11 @@ def main():
                 check(abs(dims['w']/dims['h']-revised['width']/revised['height']) < 0.02, 'cópia técnica não sofre deformação')
                 response = context.request.get(ORIGIN + revised['path'])
                 check(response.status == 200 and hashlib.sha256(response.body()).hexdigest() == revised['sha256'], 'cópia técnica servida sem recompressão')
-            for size in [32,48,64]:
+            for size in [64,96]:
                 sample = page.get_by_role('img', name=f'Símbolo JA revisado na caixa de menu de {size} pixels, sem deformação')
                 sample.scroll_into_view_if_needed()
                 check(abs(sample.evaluate('(img) => img.getBoundingClientRect().width')-size) < 1, 'símbolo disponível em tamanho real de menu')
-            sample = page.get_by_role('img', name='Cópia técnica horizontal em tamanho de interface, não ativada')
+            sample = page.get_by_role('img', name='Cópia técnica horizontal em tamanho de interface, uso experimental')
             check(sample.evaluate('(img) => img.width') <= 320, 'ensaio de cabeçalho respeita limite de 320px')
             if os.environ.get('DEMO_SCREENSHOTS_DIR'):
                 for summary in page.get_by_role('main').locator('summary').all():

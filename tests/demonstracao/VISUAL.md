@@ -24,7 +24,7 @@ Pares de referência calculados por luminância relativa sRGB:
 
 Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4,5:1. Os painéis usam branco/cinza e tom neutro derivado para texto. Foco por teclado recebe contorno branco. Os testes verificam cores efetivas, pares de texto selecionados, indicador roxo e ausência de overflow; não equivalem a auditoria WCAG completa ou teste em aparelhos físicos.
 
-**Cópias técnicas para comparação:** os originais permanecem intactos. O [relatório de refinamento](brand/REFINAMENTO.md) documenta ajuste de margens e remoção conservadora de componentes isolados de alfa 1, com RGB e pixels da marca preservados. `/demonstracao/identidade` compara antes/depois em fundos escuro/claro e inclui ensaios de cabeçalho/menu. Nenhum arquivo novo foi ativado nos painéis.
+**Cópias técnicas para comparação:** os originais permanecem intactos. O [relatório de refinamento](brand/REFINAMENTO.md) documenta ajuste de margens e remoção conservadora de componentes isolados de alfa 1, com RGB e pixels da marca preservados. `/demonstracao/identidade` compara antes/depois em fundos escuro/claro e inclui ensaios de cabeçalho/menu. As cópias existentes estão agora integradas experimentalmente aos painéis, conforme autorização; aprovação visual final pendente.
 
 ## Administrador — desktop, 1440 px
 
@@ -39,7 +39,7 @@ Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4
 ![Painel de aluno fictício em layout estreito, com navegação e cartões responsivos](previews/aluno-celular.png)
 
 
-## Logotipos — galeria técnica, sem ativação nos painéis
+## Histórico — galeria original anterior à integração
 
 ![Galeria de propostas originais para aprovação técnica](previews/identidade-logotipos-desktop.png)
 
@@ -53,3 +53,18 @@ Não usar azul ou roxo como texto pequeno sobre Grafite: os pares não atendem 4
 ![Comparação responsiva em viewport de celular](previews/identidade-refinamento-celular.png)
 
 ![Ensaios em tamanhos reais de cabeçalho, apresentação e menus](previews/marca-tamanhos-reais.png)
+
+## Integração experimental — revisão atual
+
+Cabeçalho compartilhado pelos três painéis: horizontal com 320 px no desktop (a partir de 640 px), símbolo com 96 px em telas estreitas. A apresentação usa a versão vertical com até 240 px. Imagens proporcionais, sem otimização, filtros, recortes adicionais ou novas alterações nos PNGs. As áreas transparentes de segurança das cópias são mantidas. Nenhuma caixa de 32 px é usada; o guia compara 64/96 px.
+
+As seis capturas atuais estão abaixo e nas seções anteriores, em 1440/390 px. Revisão visual local realizada; a aprovação final cabe ao proprietário.
+
+| Painel | Desktop | Celular |
+|---|---|---|
+| Administrador | [Captura](previews/administrador-desktop.png) | [Captura](previews/administrador-celular.png) |
+| Profissional | [Captura](previews/profissional-desktop.png) | [Captura](previews/profissional-celular.png) |
+| Aluno | [Captura](previews/aluno-desktop.png) | [Captura](previews/aluno-celular.png) |
+| Apresentação | [Captura](previews/apresentacao-desktop.png) | [Captura](previews/apresentacao-celular.png) |
+
+Resultado: build aprovado, 22 testes Auth/integridade e verificação pixel a pixel aprovados; 265 assertivas Chromium em 1440/390/320 px. Lint sem erros, com o aviso preexistente em `/teste-supabase`. Testes Auth usam adaptadores simulados; não foi repetido ciclo real no Supabase. Verificações de teclado, textos alternativos e contrastes selecionados não equivalem a auditoria WCAG completa. Safari/Firefox e aparelhos físicos permanecem pendentes.

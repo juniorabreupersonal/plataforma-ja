@@ -4,6 +4,8 @@ import { brandStyle, demoClasses as styles } from "./tokens";
 import "./theme.css";
 import { profiles, type DemoDashboard } from "./data";
 
+import { DemoBrand } from "./brand";
+
 const focus = styles.focus;
 
 export function DemoFrame({ children, contentId = "conteudo-demonstracao" }: { children: ReactNode; contentId?: string }) {
@@ -13,7 +15,8 @@ export function DemoFrame({ children, contentId = "conteudo-demonstracao" }: { c
       <header className={`border-b ${styles.border}`}>
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-5 px-5 py-6 sm:px-8">
           <Link href="/demonstracao" className={`flex items-center gap-3 rounded-lg ${focus}`} aria-label="JÚNIOR ABREU PERFORMANCE — início da demonstração">
-            <span className={styles.wordmark}><span className="block text-sm font-bold tracking-[0.12em]">JÚNIOR ABREU</span><span className={`block text-xs tracking-[0.22em] ${styles.muted}`}>PERFORMANCE</span></span>
+            <DemoBrand variant="horizontal" width={320} className="hidden sm:block" />
+            <DemoBrand variant="simbolo" width={96} className="sm:hidden" />
           </Link>
           <Link href="/" className={`rounded-lg text-sm underline underline-offset-4 ${styles.link} ${focus}`}>Página inicial</Link>
         </div>

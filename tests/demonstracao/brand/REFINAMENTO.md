@@ -59,10 +59,16 @@ Também há ensaios isolados de cabeçalho com até 320 px, apresentação com a
 - O símbolo com barra/anilhas é largo e detalhado: em caixa de menu de 32 px sua altura útil é pequena. Transformá-lo em ícone quadrado simplificado exigiria novo desenho aprovado; não foi feito.
 - Não existe matriz vetorial/editável fornecida. Estas cópias mantêm a nitidez raster original, sem promessa de equivalência vetorial ou reconstrução da prancha.
 
-## Estado para aprovação
+## Histórico — estado anterior à autorização de integração
 
 Cópias em `public/brand/revisadas/`, **somente para comparação**. Originais, identidade textual dos painéis, telas reais de acesso e favicon preservados. Os testes conferem que os três painéis continuam sem ativar imagens nos cabeçalhos. Não houve merge, deploy, publicação de aplicação, alteração de permissões ou acesso ao Supabase.
 
-## Resultado local
+## Histórico — resultado do refinamento
 
 Build de produção aprovado; 22 testes Auth/arquivos originais aprovados; verificação das três cópias pixel a pixel aprovada; 221 assertivas Chromium aprovadas, incluindo imagens originais/revisadas, integridade HTTP, proporções, tamanhos de menu, responsividade e ausência de ativação nos cabeçalhos. Lint sem erros, mantendo somente o aviso preexistente em `/teste-supabase`. As capturas foram revistas visualmente. Safari/Firefox, aparelhos físicos e auditoria completa de acessibilidade não foram executados.
+
+## Integração experimental posterior autorizada
+
+Os PNGs acima permanecem byte a byte idênticos. A autorização posterior permite seu uso somente na demonstração: horizontal 320 px no cabeçalho largo, símbolo 96 px no compacto e vertical 240 px na apresentação. O guia atual compara caixas 64/96 px e não apresenta mais 32 px. O manifesto e seu verificador registram o novo estado experimental; algoritmo, hashes, margens e pixels não mudaram.
+
+As [capturas atuais](../VISUAL.md) incluem os três painéis em desktop/celular. Build, 22 testes Auth/integridade, verificador pixel a pixel e 265 assertivas Chromium passaram. Aprovação visual definitiva pendente. Limites gráficos descritos acima permanecem; telas reais de autenticação e favicon não foram alterados.

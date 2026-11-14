@@ -1,0 +1,69 @@
+{
+  "sourceArchiveSHA256": "c6fd3ae00e1027bad94c176c6be9b0c5f19f0c0196aa3a3b381cf045a469ec27",
+  "referenceSHA256": "8c4f4d3a13ee9ed171b2bc0587f5cc236f5db6fdfab94731d824ccf102b5b4c8",
+  "files": [
+    {
+      "variant": "horizontal",
+      "sourceName": "Logo horizontal JA Perf.png",
+      "path": "/brand/propostas/ja-horizontal.png",
+      "width": 1448,
+      "height": 1086,
+      "sha256": "f340bd7754d722326b46d287388bb52e076a63fdfb13038485b1da21c5cffb4b",
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "transparentPixels": 1383018,
+      "alphaBBox": [
+        65,
+        39,
+        1434,
+        1021
+      ],
+      "status": "pending-technical-approval"
+    },
+    {
+      "variant": "vertical",
+      "sourceName": "Logo Vertical JA Perf.png",
+      "path": "/brand/propostas/ja-vertical.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "76efa2402f73da319100d2067c074936c809e2b070a106c3db2a7fd1bf117d95",
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "transparentPixels": 1232891,
+      "alphaBBox": [
+        33,
+        35,
+        1108,
+        1346
+      ],
+      "status": "pending-technical-approval"
+    },
+    {
+      "variant": "simbolo",
+      "sourceName": "Logo isolada JA perf.png",
+      "path": "/brand/propostas/ja-simbolo.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "4d44756d2ad00ddb2b988d50a4f550b219ff170980fa9a6521cf9f29c3abddf6",
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "transparentPixels": 1294028,
+      "alphaBBox": [
+        0,
+        32,
+        1232,
+        1254
+      ],
+      "status": "pending-technical-approval"
+    }
+  ]
+}

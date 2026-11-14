@@ -103,7 +103,8 @@ def exercise(stack, directory):
     check(context(stack, owner2)['administrator'] and context(stack, owner2)['professional'], 'proprietário pode acumular função profissional explicitamente separada')
     check(stack.rows('care_relationships', owner2) == [], 'acúmulo profissional não libera registros alheios')
 
-    stack.rpc('ja_invite_member', owner2, {'p_org':orgs[0], 'p_user':users['basic']['user']['id'], 'p_role':'student', 'p_reason':'Synthetic browser acceptance'})
+    own_invite = stack.rpc('ja_invite_member', owner2, {'p_org':orgs[0], 'p_user':users['basic']['user']['id'], 'p_role':'student', 'p_reason':'Synthetic browser acceptance'})
+    foreign_invite = stack.rpc('ja_invite_member', owner2, {'p_org':orgs[0], 'p_user':users['pro-b']['user']['id'], 'p_role':'professional', 'p_reason':'Synthetic pending foreign invitation'})
     STAGE = 'navegador real e ações servidor'
     application = b.Application(directory, stack.key)
     STAGE = 'build isolado Next.js'
@@ -128,17 +129,24 @@ def exercise(stack, directory):
             for path in ['/administrador?role=owner','/profissional?role=professional','/aluno?role=student','/seguranca/mfa']:
                 basic_page.goto(b.APP+path)
                 check(basic_page.get_by_role('heading',name='Administração da Plataforma JA').count() == 0 and basic_page.get_by_role('button',name='Criar organização').count() == 0, 'browser: URL direta e query manipulada não liberam administração')
-            STAGE = 'ação de aceite de convite'
-            basic_page.goto(b.APP+'/conta')
-            basic_page.locator('input[name="id"]').evaluate('(input, value) => input.value = value', memberships[('pro-a',orgs[0])])
-            basic_page.get_by_role('button',name='Aceitar convite').click()
-            basic_page.get_by_role('status').filter(has_text='Convite indisponível').wait_for()
-            check(not context(stack, users['basic'])['student'], 'browser: ID adulterado na ação servidor não aceita convite de terceiro')
-            basic_page.reload()
-            basic_page.get_by_role('button',name='Aceitar convite').click()
+            STAGE = 'convite presente na conta'
+            basic_page.goto(b.APP+'/conta', wait_until='networkidle')
+            basic_page.get_by_role('button',name='Aceitar convite').wait_for()
+            STAGE = 'aceite legítimo de convite pelo navegador'
+            with basic_page.expect_request(lambda req: req.method == 'POST' and req.url == b.APP+'/conta') as invitation_capture:
+                basic_page.get_by_role('button',name='Aceitar convite').click()
             basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).wait_for()
             basic_page.reload()
             check(basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).count()==1, 'browser: aceite legítimo habilita apenas função previamente autorizada')
+            STAGE = 'POST de aceite com convite pendente de terceiro'
+            invitation_request = invitation_capture.value
+            headers = {key:value for key,value in invitation_request.all_headers().items() if key in ('content-type','next-action')}
+            headers['origin'] = b.APP
+            body = invitation_request.post_data_buffer
+            check('next-action' in headers and body and own_invite.encode() in body, 'captura da Server Action real contém identificador sintético esperado')
+            tampered = body.replace(own_invite.encode(), foreign_invite.encode())
+            denied = basic_page.context.request.post(b.APP+'/conta', data=tampered, headers=headers)
+            check('Convite indispon' in denied.text() and not context(stack, users['basic'])['professional'] and stack.sql(f"select status from public.organization_memberships where id='{foreign_invite}';").stdout.strip() == 'invited', 'HTTP: ID adulterado não aceita convite pendente de terceiro nem amplia função')
             STAGE = 'painel profissional'
             pro = page_for('pro-a')
             pro.goto(b.APP+'/profissional')

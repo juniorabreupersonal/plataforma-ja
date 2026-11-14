@@ -106,6 +106,7 @@ def exercise(stack, directory):
     stack.rpc('ja_invite_member', owner2, {'p_org':orgs[0], 'p_user':users['basic']['user']['id'], 'p_role':'student', 'p_reason':'Synthetic browser acceptance'})
     STAGE = 'navegador real e ações servidor'
     application = b.Application(directory, stack.key)
+    STAGE = 'build isolado Next.js'
     application.start()
     try:
         from playwright.sync_api import sync_playwright
@@ -120,12 +121,14 @@ def exercise(stack, directory):
                 page = ctx.new_page()
                 b.login(page, users[name]['email'], users[name]['password'])
                 return page
+            STAGE = 'login de conta básica'
             basic_page = page_for('basic')
             basic_page.context.add_cookies([{'name':'role','value':'owner','url':b.APP},{'name':'ja-role','value':'admin','url':b.APP}])
             check(basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link').count() == 0, 'browser: perfil básico não vê painéis')
             for path in ['/administrador?role=owner','/profissional?role=professional','/aluno?role=student','/seguranca/mfa']:
                 basic_page.goto(b.APP+path)
                 check(basic_page.get_by_role('heading',name='Administração da Plataforma JA').count() == 0 and basic_page.get_by_role('button',name='Criar organização').count() == 0, 'browser: URL direta e query manipulada não liberam administração')
+            STAGE = 'ação de aceite de convite'
             basic_page.goto(b.APP+'/conta')
             basic_page.locator('input[name="id"]').evaluate('(input, value) => input.value = value', memberships[('pro-a',orgs[0])])
             basic_page.get_by_role('button',name='Aceitar convite').click()
@@ -136,20 +139,25 @@ def exercise(stack, directory):
             basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).wait_for()
             basic_page.reload()
             check(basic_page.get_by_role('navigation',name='Seus painéis').get_by_role('link',name='Aluno',exact=True).count()==1, 'browser: aceite legítimo habilita apenas função previamente autorizada')
+            STAGE = 'painel profissional'
             pro = page_for('pro-a')
             pro.goto(b.APP+'/profissional')
             pro.get_by_role('heading',name='Meu painel profissional').wait_for()
             check(care[0] in pro.get_by_role('main').inner_text() and care[1] not in pro.get_by_role('main').inner_text(), 'browser: profissional vê somente seu vínculo')
             pro.goto(b.APP+'/administrador')
             check(pro.get_by_role('button',name='Criar organização').count()==0, 'browser: profissional não acessa ação administrativa')
+            STAGE = 'painel aluno'
             student = page_for('student')
             student.goto(b.APP+'/aluno')
             student.get_by_role('heading',name='Meu painel de aluno').wait_for()
             check(all(cid in student.get_by_role('main').inner_text() for cid in care), 'browser: aluno vê seus dois vínculos autorizados')
+            STAGE = 'login proprietário AAL1'
             admin = page_for('owner')
             check(admin.get_by_role('link',name='Administrador',exact=True).count()==0, 'browser: proprietário AAL1 não vê menu administrativo')
+            STAGE = 'proteção administrativa por MFA'
             admin.goto(b.APP+'/administrador')
             admin.wait_for_url(b.APP+'/seguranca/mfa')
+            STAGE = 'rejeição MFA inválido'
             admin.get_by_label('Código do autenticador').fill(str((int(totp(secret))+1)%1000000).zfill(6))
             admin.get_by_role('button',name='Confirmar acesso').click()
             admin.get_by_role('status').filter(has_text='Não foi possível validar').wait_for()
@@ -158,11 +166,13 @@ def exercise(stack, directory):
             step = int(time.time()) // 30
             while int(time.time()) // 30 == step:
                 time.sleep(0.2)
+            STAGE = 'verificação MFA válido'
             admin.get_by_label('Código do autenticador').fill(totp(secret))
             admin.get_by_role('button',name='Confirmar acesso').click()
             admin.wait_for_url(b.APP+'/administrador')
             admin.get_by_role('heading',name='Administração da Plataforma JA').wait_for()
             check(admin.get_by_role('link',name='Administrador',exact=True).count()==1, 'browser: MFA válido libera navegação exclusiva do proprietário')
+            STAGE = 'ação de criação de organização'
             admin.get_by_label('Nome da organização').fill('Synthetic browser organization')
             with admin.expect_request(lambda req: req.method == 'POST' and req.url == b.APP+'/administrador') as action_capture:
                 admin.get_by_role('button',name='Criar organização').click()
@@ -170,6 +180,7 @@ def exercise(stack, directory):
             response = admin.reload()
             check('no-store' in response.headers.get('cache-control','') and response.headers.get('referrer-policy') == 'no-referrer', 'browser: painel retorna cabeçalhos privados e sem referência externa')
             check('Synthetic browser organization' in admin.get_by_role('main').inner_text(), 'browser: ação administrativa persiste organização com auditoria')
+            STAGE = 'POST administrativo direto por profissional'
             action_request = action_capture.value
             headers = {key:value for key,value in action_request.all_headers().items() if key in ('content-type','next-action')}
             check('next-action' in headers, 'requisição real identifica Server Action testada')
@@ -177,14 +188,18 @@ def exercise(stack, directory):
             before = stack.sql('select count(*) from public.organizations;').stdout.strip()
             denied = pro.context.request.post(b.APP+'/administrador', data=action_request.post_data_buffer, headers=headers)
             check(denied.status >= 400 and stack.sql('select count(*) from public.organizations;').stdout.strip() == before, 'HTTP: profissional não executa Server Action administrativa capturada por acesso direto')
+            STAGE = 'proteção CSRF de origem externa'
             headers['origin'] = 'https://external.example.invalid'
             denied = admin.context.request.post(b.APP+'/administrador', data=action_request.post_data_buffer, headers=headers)
             check(denied.status >= 400 and stack.sql('select count(*) from public.organizations;').stdout.strip() == before, 'HTTP: origem externa não executa ação mesmo com sessão proprietária')
+            STAGE = 'logout proprietário'
             b.logout(admin)
+            STAGE = 'proteção administrativa por MFA'
             admin.goto(b.APP+'/administrador')
             admin.wait_for_url(b.APP+'/login')
             check(admin.get_by_role('button',name='Criar organização').count()==0, 'browser: logout bloqueia acesso direto ao painel')
             # Requisições independentes com o mesmo JWT refletem alterações no banco.
+            STAGE = 'revogação e suspensão'
             stack.rpc('ja_end_membership', users['pro-a'], {'p_id':memberships[('pro-a',orgs[0])],'p_reason':'Synthetic revocation'})
             check(not context(stack, users['pro-a'])['professional'], 'JWT antigo não mantém função após encerramento de vínculo')
             pro.goto(b.APP+'/profissional')
@@ -221,6 +236,8 @@ if __name__ == '__main__':
     except s.Failure as error:
         print('::error title=Authorized panels::'+str(error), flush=True)
         raise SystemExit(1)
-    except Exception:
-        print('::error title=Authorized panels::Falha em '+STAGE+'; detalhes sensíveis omitidos', flush=True)
+    except Exception as error:
+        kind = type(error).__name__
+        kind = kind if re.fullmatch(r'[A-Za-z_]{1,60}', kind) else 'Exception'
+        print('::error title=Authorized panels::Falha em '+STAGE+' ('+kind+'); detalhes sensíveis omitidos', flush=True)
         raise SystemExit(1)

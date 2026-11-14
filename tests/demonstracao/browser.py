@@ -86,7 +86,6 @@ def main():
             errors = []
             page.on('pageerror', lambda _: errors.append(True))
             samples = [
-                ('administrador', 'Administrador', 'Organizações'),
                 ('profissional', 'Profissional', 'Meus alunos'),
                 ('aluno', 'Aluno', 'Minha jornada'),
             ]
@@ -96,7 +95,7 @@ def main():
                     page.goto(ORIGIN + '/demonstracao', wait_until='networkidle')
                     vertical = page.get_by_role('main').locator('img')
                     check(vertical.get_attribute('src') == '/brand/revisadas/ja-vertical-tecnica.png', 'apresentação usa a versão vertical existente')
-                    if profile == 'administrador' and width in (1440, 390) and os.environ.get('DEMO_SCREENSHOTS_DIR'):
+                    if profile == 'profissional' and width in (1440, 390) and os.environ.get('DEMO_SCREENSHOTS_DIR'):
                         dest = Path(os.environ['DEMO_SCREENSHOTS_DIR'])
                         dest.mkdir(parents=True, exist_ok=True)
                         page.screenshot(path=str(dest / f'apresentacao-{width}.png'), full_page=True)
@@ -193,9 +192,14 @@ def main():
                 page.goto(ORIGIN + route, wait_until='networkidle')
                 check(urllib.parse.urlsplit(page.url).path == destination, 'rota protegida nega acesso após visita à demonstração e papel adulterado')
                 check(page.get_by_text('Sua sessão foi validada.', exact=True).count() == 0, 'conteúdo autenticado não é exibido')
-            for path in ['/administrador', '/profissional', '/aluno', '/demonstracao/inexistente']:
+            for path in ['/demonstracao/administrador', '/demonstracao/inexistente']:
                 response = page.goto(ORIGIN + path)
                 check(response.status == 404, 'rota real não implementada ou demo inválida não é liberada')
+            for path in ['/administrador?role=owner', '/profissional?role=professional', '/aluno?role=student', '/seguranca/mfa']:
+                page.goto(ORIGIN + path, wait_until='networkidle')
+                check(page.get_by_role('heading', name='Administração da Plataforma JA').count() == 0, 'acesso direto anônimo nunca exibe painel administrativo')
+            page.goto(ORIGIN + '/demonstracao')
+            check(page.get_by_role('link', name='Administrador', exact=True).count() == 0 and 'administrador' not in page.get_by_role('main').inner_text().lower(), 'demonstração pública não anuncia administração')
             page.goto(ORIGIN + '/demonstracao/aluno?role=admin')
             check(page.get_by_role('navigation', name='Escolher painel de demonstração').get_by_role('link', name='Aluno', exact=True).get_attribute('aria-current') == 'page', 'query manipulada não muda o painel estático')
             check(not errors, 'nenhuma exceção JavaScript durante navegação')

@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prebuild": "node scripts/homologation/preflight.mjs",
+    "verify:homologation": "node scripts/homologation/preflight.mjs --staging",
+    "test:homologation": "node --test tests/homologation/*.test.mjs",
+    "verify:migrations": "node scripts/homologation/check-migrations.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -24,5 +28,8 @@
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

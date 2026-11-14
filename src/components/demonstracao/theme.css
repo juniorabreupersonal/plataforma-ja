@@ -1,0 +1,85 @@
+.ja-demo {
+  --ja-muted: color-mix(in srgb, var(--ja-metal) 78%, var(--ja-black));
+  --ja-border: color-mix(in srgb, var(--ja-metal) 22%, var(--ja-black));
+  --ja-soft: color-mix(in srgb, var(--ja-blue) 8%, var(--ja-black));
+  --ja-action-hover: color-mix(in srgb, var(--ja-blue) 78%, var(--ja-purple));
+  background: var(--ja-black);
+  color: var(--ja-white);
+}
+
+.ja-demo .ja-demo__focus:focus-visible {
+  outline: 2px solid var(--ja-white);
+  outline-offset: 4px;
+}
+
+.ja-demo .ja-demo__border { border-color: var(--ja-border); }
+.ja-demo .ja-demo__muted { color: var(--ja-muted); }
+.ja-demo .ja-demo__secondary { color: var(--ja-metal); }
+.ja-demo .ja-demo__surface { background: var(--ja-graphite); border-color: var(--ja-border); }
+
+.ja-demo .ja-demo__skip, .ja-demo .ja-demo__active, .ja-demo .ja-demo__primary {
+  background: var(--ja-blue);
+  color: var(--ja-white);
+}
+
+.ja-demo .ja-demo__primary { border: 1px solid var(--ja-purple); }
+.ja-demo .ja-demo__primary:hover { background: var(--ja-action-hover); }
+.ja-demo .ja-demo__active { border-color: var(--ja-blue); }
+
+.ja-demo .ja-demo__navLink { color: var(--ja-metal); }
+.ja-demo .ja-demo__navLink:hover { background: var(--ja-graphite); color: var(--ja-white); }
+
+.ja-demo .ja-demo__link { color: var(--ja-metal); text-decoration-color: var(--ja-purple); }
+.ja-demo .ja-demo__link:hover { color: var(--ja-white); }
+
+.ja-demo .ja-demo__notice { background: var(--ja-soft); border-color: var(--ja-border); }
+.ja-demo .ja-demo__notice strong { color: var(--ja-white); }
+
+.ja-demo .ja-demo__hero {
+  background: linear-gradient(125deg, color-mix(in srgb, var(--ja-blue) 9%, var(--ja-graphite)), var(--ja-graphite));
+  border-color: var(--ja-border);
+  border-top: 3px solid var(--ja-blue);
+}
+
+.ja-demo .ja-demo__badge {
+  background: var(--ja-black);
+  border-color: var(--ja-border);
+  color: var(--ja-metal);
+}
+.ja-demo .ja-demo__badge::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: var(--ja-purple);
+}
+
+.ja-demo .ja-demo__metric { background: var(--ja-graphite); border-color: var(--ja-border); }
+.ja-demo .ja-demo__metric::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 0.2rem;
+  margin-bottom: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(90deg, var(--ja-blue) 70%, var(--ja-purple));
+}
+
+.ja-demo .ja-demo__exampleCard {
+  background: var(--ja-graphite);
+  border-color: var(--ja-border);
+  border-top: 3px solid var(--ja-blue);
+}
+.ja-demo .ja-demo__exampleCard:hover { border-color: var(--ja-blue); }
+
+.ja-demo .ja-demo__step {
+  width: fit-content;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--ja-blue);
+  color: var(--ja-white);
+}
+
+/* Filete pequeno, sem brilho ou grandes superfícies roxas. */
+.ja-demo .ja-demo__wordmark { border-left: 3px solid var(--ja-blue); padding-left: 0.85rem; }

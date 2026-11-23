@@ -107,8 +107,7 @@ export default function Home() {
         </h3>
 
         <p className="mt-4 text-slate-300">
-          Em breve, você poderá acessar seu ambiente
-          individual de treinamento e avaliação.
+          Acesse sua conta. A disponibilidade de cada painel depende de habilitação e vínculo autorizado.
         </p>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -119,9 +118,7 @@ export default function Home() {
             <p className="mt-3 text-slate-400">
               Avaliações, treinamentos e resultados.
             </p>
-            <span className="mt-6 inline-block text-amber-400">
-              Em desenvolvimento
-            </span>
+            <Link href="/aluno" className="mt-6 inline-block text-amber-400 underline">Acessar como aluno</Link>
           </div>
 
           <div className="rounded-xl border border-white/10 p-6">
@@ -131,9 +128,7 @@ export default function Home() {
             <p className="mt-3 text-slate-400">
               Gestão de alunos, avaliações e prescrições.
             </p>
-            <span className="mt-6 inline-block text-amber-400">
-              Em desenvolvimento
-            </span>
+            <Link href="/profissional" className="mt-6 inline-block text-amber-400 underline">Acessar como profissional</Link>
           </div>
         </div>
       </section>

@@ -40,3 +40,9 @@ Funções organizacionais podem coexistir por atribuições distintas. A ativaç
 Identificadores, autoria e vínculos serão derivados ou verificados no servidor. Restrições relacionais impedirão combinar recursos e participantes de organizações incompatíveis. Referências ao aluno serão estáveis e não dependerão de um vínculo continuar ativo.
 
 A Fase 1 inclui solicitar portabilidade por fluxo controlado. Automatização de pacotes completos e resolução de situações complexas poderá ser posterior, sem retirar o canal de atendimento ao titular.
+
+## Atualização de escopo — Etapa 166
+
+Nesta entrega, o proprietário é o único administrador global. Delegações globais previstas para fases futuras ficam desativadas, inclusive pela API do banco; atribuições históricas `admin` não habilitam gestão global. Não há cadastro, menu ou demonstração administrativa pública. O painel administrativo exige identidade ativa e confirmada, atribuição vigente de proprietário e sessão MFA AAL2.
+
+O proprietário pode exercer função profissional mediante vínculo separado e autorizado, sem acesso automático aos acompanhamentos de outros profissionais. A inicialização do proprietário permanece operacional e restrita, sem endpoint público. A reativação de delegação global depende de nova aprovação e migração revisada. Esta atualização registra a diretriz explícita da Etapa 166, sem eliminar o desenho futuro de delegações com escopo.

@@ -1,0 +1,37 @@
+name: Homologation readiness - no deployment
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: homologation-readiness-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      APP_ENV: local
+      APP_URL: http://127.0.0.1:3210
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_demo_not_a_real_key
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - run: npm ci --include=dev --no-audit --no-fund
+      - name: Environment, gate, Auth, permissions and MFA tests (no network)
+        run: node --test tests/homologation/*.test.mjs tests/auth.test.mjs tests/paineis/access.test.mjs tests/demonstracao/brand-assets.test.mjs
+      - run: npm run verify:migrations
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - name: Scope
+        run: |
+          echo '## Readiness only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Synthetic in-memory policy and loopback build. Hosted targets remain blocked until approval in the versioned policy. No deploy, remote SQL, secrets or artifacts.' >> "$GITHUB_STEP_SUMMARY"

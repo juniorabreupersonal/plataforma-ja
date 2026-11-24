@@ -1,4 +1,7 @@
+import { runtimeEnvironment } from "./src/lib/environment/policy.mjs";
 import type { NextConfig } from "next";
+
+runtimeEnvironment(process.env);
 
 const nextConfig: NextConfig = {
   /* config options here */

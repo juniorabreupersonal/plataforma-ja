@@ -1,0 +1,14 @@
+{
+  "sourcePR": 8,
+  "sourceCommit": "f5c1880a36aaf6d592037447b7a54a106cfb4281",
+  "files": [
+    {
+      "path": "supabase/migrations/202610250001_identity_foundation.sql",
+      "sha256": "11a9c36267d91e59df44aa0ad4863598c397954c5e4a4758913b5f6c9e0629e2"
+    },
+    {
+      "path": "supabase/migrations/202611140001_exclusive_owner_panels.sql",
+      "sha256": "8cadf519e1505ddb431730644d4f188ea0cbdca8700b2ed8ea79d2a83a66a874"
+    }
+  ]
+}

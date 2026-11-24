@@ -24,6 +24,7 @@ async function Account() {
       {session.permissions.owner_candidate && !session.permissions.administrator && <Link href="/seguranca/mfa" className="mt-4 block underline">Confirmar identidade</Link>}
       {!session.permissions.owner_candidate && !session.permissions.professional && !session.permissions.student && <p className="mt-4">Seu perfil básico está ativo. Os painéis dependem de habilitação e vínculo autorizado.</p>}</>
       : <p className="mt-4" role="status">Acesso aos painéis indisponível. Nenhuma permissão foi presumida. Tente novamente ou solicite atendimento.</p>}
+    {session && !session.permissions.owner_candidate && <Link href="/conta/seguranca" className="mt-4 block underline">Configurar autenticador</Link>}
     {invitations && !invitations.error && invitations.data.length > 0 && <section className="mt-6"><h2 className="text-xl font-semibold">Convites pendentes</h2><p>Aceite somente vínculos que você reconheça.</p><ul className="mt-3 space-y-4">{invitations.data.map((item) => <li key={item.id} className="break-all">Organização: {item.organization_id} — {item.role}<AcceptInvitation id={item.id} /></li>)}</ul></section>}
     <LogoutButton /></>;
 }
